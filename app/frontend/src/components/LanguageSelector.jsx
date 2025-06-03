@@ -9,6 +9,7 @@ export default function LanguageSelector() {
 
   const languages = [
     { code: 'en', label: 'English (United States)' },
+    { code: 'es', label: 'Español (España)' },
     { code: 'pt', label: 'Português (Brasil)' }
   ];
 

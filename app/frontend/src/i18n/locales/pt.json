@@ -11,9 +11,14 @@
   "register_title": "Assine gratuitamente",
   "name": "Nome",
   "surname": "Sobrenome",
-  "terms_text": "Ao selecionar 'Concordar e criar conta', eu concordo com os Termos e com o Contrato de serviços. Leia a nossa Política de privacidade para saber como usamos e protegemos os seus dados.",
+  "terms_text": "Ao selecionar 'Concordar e criar conta', eu concordo com os <terms>Termos</terms> e com o <services>Contrato de serviços</services>. Leia a nossa <privacy>Política de privacidade</privacy> para saber como usamos e protegemos os seus dados.",
   "agree_create_account": "Concordar e criar conta",
   "no_account": "Ainda não tem conta?",
   "register_link": "Cadastre-se",
-  "to_go_back": "Voltar"
+  "to_go_back": "Voltar",
+  "registered_successfully": "Cadastro realizado com sucesso",
+  "error": {
+    "fields_not_filled" : "Campos obrigatórios não foram preenchidos.",
+    "email_already_registered" : "Este e-mail já está cadastrado."
+  }
 }

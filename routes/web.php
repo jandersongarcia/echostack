@@ -1,6 +1,11 @@
 <?php
 
-// Aqui você já tem acesso ao $router que foi criado no bootstrap.
-// Então apenas adicionamos as rotas:
+use App\Controllers\HomeController;
+use App\Controllers\AuthController;
+use Symfony\Component\HttpFoundation\Request;
 
-$router->map('GET', '/', 'App\Controllers\HomeController@index');
+// Rota home
+$router->map('GET', '/v1/', 'App\Controllers\HomeController@index');
+
+// Rota de cadastro
+$router->map('POST', '/v1/register', 'App\Controllers\AuthController@register');

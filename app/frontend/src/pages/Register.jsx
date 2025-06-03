@@ -1,130 +1,105 @@
 import React, { useState } from 'react';
-import NavbarLogin from '../components/NavbarLogin';
+import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
+import { TextField, Button, Typography, Box } from '@mui/material';
+
+import NavbarLogin from '../components/NavbarLogin';
+import TermsText from '../components/TermsText';
+import Notification from '../components/Notification';
+import api from '../api/api';
+
 
 export default function Register() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
+    const [notification, setNotification] = useState(null);
 
-    // Estados para capturar os dados do formulário
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
     const [surname, setSurname] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         const formData = {
-            email,
-            name,
-            surname,
-            password
+            name: name,
+            surname: surname,
+            email: email,
+            password: password,
+            language: i18n.language
         };
 
-        console.log('Dados para envio:', formData);
-
-        // Aqui futuramente você chama sua API PHP
-        // ex: axios.post('/api/register', formData)
+        try {
+            const response = await api.post('register', formData);
+            console.log("Resposta do servidor:", response.data);
+            setNotification(response.data.message);
+            // redirecionar ou mostrar mensagem de sucesso aqui
+        } catch (error) {
+            console.error("Erro ao cadastrar:", error.response?.data || error.message);
+            // mostrar erro para o usuário
+        }
     };
 
     return (
-        <div style={{ fontFamily: 'Poppins, sans-serif', height: '100vh', position: 'relative' }}>
+        <Box sx={{ fontFamily: 'Poppins, sans-serif', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <NavbarLogin />
 
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                <div style={{ width: '320px' }}>
+            <Box flex={1} display="flex" justifyContent="center" alignItems="center">
+                <Box width="100%" maxWidth="400px">
 
                     {/* Botão Voltar */}
-                    <div
-                        onClick={() => navigate('/')}
-                        style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginBottom: '20px' }}
-                    >
+                    <Box display="flex" alignItems="center" mb={3} sx={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
                         <FaArrowLeft style={{ marginRight: '8px' }} />
-                        <span>{t('to_go_back')}</span>
-                    </div>
+                        <Typography>{t('to_go_back')}</Typography>
+                    </Box>
 
-                    <h2 style={{ textAlign: 'center' }}>{t('register_title')}</h2>
-                    <div style={{ width: '320px', border: '1px', borderColor: '#333' }}>
-                        <form onSubmit={handleSubmit}>
-                            <div style={{ marginBottom: '10px' }}>
-                                <label>{t('email')}</label>
-                                <input
-                                    type="email"
-                                    style={inputStyle}
-                                    placeholder={t('email_model')}
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                />
-                            </div>
+                    <Typography variant="h5" textAlign="center" mb={3}>{t('register_title')}</Typography>
 
-                            <div style={{ display: 'flex', gap: '30px', marginBottom: '10px' }}>
-                                <div style={{ flex: 1 }}>
-                                    <label>{t('name')}</label>
-                                    <input
-                                        type="text"
-                                        style={inputStyle}
-                                        placeholder={t('name')}
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                    />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <label>{t('surname')}</label>
-                                    <input
-                                        type="text"
-                                        style={inputStyle}
-                                        placeholder={t('surname')}
-                                        value={surname}
-                                        onChange={(e) => setSurname(e.target.value)}
-                                    />
-                                </div>
-                            </div>
+                    <form onSubmit={handleSubmit}>
+                        <Box display="flex" flexDirection="column" gap={2}>
 
-                            <div style={{ marginBottom: '20px' }}>
-                                <label>{t('password')}</label>
-                                <input
-                                    type="password"
-                                    style={inputStyle}
-                                    placeholder={t('password')}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                />
-                            </div>
+                            <TextField
+                                fullWidth label={t('name')} placeholder={t('name')}
+                                value={name} onChange={(e) => setName(e.target.value)}
+                                required
+                            />
 
-                            <p style={{ fontSize: '12px', color: '#555', marginBottom: '20px', lineHeight: '20px' }}>
-                                {t('terms_text')}
-                            </p>
+                            <TextField
+                                fullWidth label={t('surname')} placeholder={t('surname')}
+                                value={surname} onChange={(e) => setSurname(e.target.value)}
+                                required
+                            />
 
-                            <button type="submit" style={buttonStyle}>
+                            <TextField
+                                fullWidth label={t('email')} placeholder={t('email_model')}
+                                value={email} onChange={(e) => setEmail(e.target.value)}
+                                autoComplete="new-username"
+                                required
+                            />
+
+                            <TextField
+                                fullWidth type="password" label={t('password')} placeholder={t('password')}
+                                value={password} onChange={(e) => setPassword(e.target.value)}
+                                required
+                                autoComplete="new-password"
+                            />
+
+                            <TermsText
+                                openTerms={() => setShowTermsModal(true)}
+                                openServices={() => setShowServicesModal(true)}
+                                openPrivacy={() => setShowPrivacyModal(true)}
+                            />
+
+                            <Button type="submit" fullWidth variant="contained" size="large" sx={{ borderRadius: 2 }}>
                                 {t('agree_create_account')}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+                            </Button>
+                        </Box>
+                    </form>
+                </Box>
+            </Box>
+        </Box>
     );
 }
-
-const inputStyle = {
-    width: '100%',
-    padding: '10px',
-    border: '1px solid #ccc',
-    borderRadius: '5px',
-    fontSize: '14px'
-};
-
-const buttonStyle = {
-    width: '100%',
-    padding: '12px',
-    background: '#0061FF',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontWeight: 600,
-    fontSize: '16px'
-};

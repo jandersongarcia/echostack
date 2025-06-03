@@ -1,50 +1,76 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import NavbarLogin from '../components/NavbarLogin';
+import { Box, Button, TextField, Typography, Divider, Stack } from '@mui/material';
 
 export default function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log('Email:', email, 'Senha:', password);
+  };
+
   return (
-    <div style={{ fontFamily: 'Poppins, sans-serif', height: '100vh', position: 'relative' }}>
+    <Box sx={{ fontFamily: 'Poppins, sans-serif', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <NavbarLogin />
 
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <div style={{ width: '300px', textAlign: 'center' }}>
-          <h2>{t('title')}</h2>
+      <Box flex={1} display="flex" justifyContent="center" alignItems="center">
+        <Box width="100%" maxWidth="400px" textAlign="center">
 
-          <button style={{ width: '100%', marginBottom: '10px' }}>{t('continue_apple')}</button>
+          <Typography variant="h5" mb={3}>{t('title')}</Typography>
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            margin: '20px 0'
-          }}>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#ccc' }}></div>
-            <span style={{ margin: '0 10px', color: '#666' }}>{t('or')}</span>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#ccc' }}></div>
-          </div>
+          <Button fullWidth variant="outlined" sx={{ mb: 3 }}>
+            {t('continue_google')}
+          </Button>
 
-          <input type="email" placeholder={t('email')} style={{ width: '100%', maxWidth: '90%', padding: '10px', marginBottom: '10px' }} />
-          <input type="password" placeholder={t('password')} style={{ width: '100%', maxWidth: '90%', padding: '10px', marginBottom: '10px' }} />
-          <button style={{ width: '98%', padding: '10px', paddingTop: '14px', paddingBottom: '14px', background: '#0061FF', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
-            {t('login')}
-          </button>
+          <Stack direction="row" alignItems="center" spacing={2} mb={3}>
+            <Divider sx={{ flex: 1 }} />
+            <Typography variant="body2" color="textSecondary">{t('or')}</Typography>
+            <Divider sx={{ flex: 1 }} />
+          </Stack>
 
-          <p style={{ marginTop: '20px' }}>
+          <form onSubmit={handleSubmit}>
+            <Box display="flex" flexDirection="column" gap={2}>
+
+              <TextField
+                fullWidth
+                type="email"
+                placeholder={t('email')}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+
+              <TextField
+                fullWidth
+                type="password"
+                placeholder={t('password')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+
+              <Button type="submit" fullWidth variant="contained" size="large" sx={{ borderRadius: 2 }}>
+                {t('login')}
+              </Button>
+            </Box>
+          </form>
+
+          <Typography variant="body2" mt={3}>
             {t('no_account')}
-            <span
-              onClick={() => navigate('/register')}
-              style={{ color: '#0061FF', cursor: 'pointer', fontWeight: 'bold', marginLeft: '3px' }}
-            >
+            <Box component="span" onClick={() => navigate('/register')} sx={{ color: '#0061FF', cursor: 'pointer', fontWeight: 'bold', ml: 0.5 }}>
               {t('register_link')}
-            </span>
-          </p>
+            </Box>
+          </Typography>
 
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }

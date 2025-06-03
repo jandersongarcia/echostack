@@ -22,8 +22,6 @@ $logger->pushHandler(new StreamHandler(__DIR__ . '/../logs/app.log', Logger::DEB
 
 // Inicializa o Router
 $router = new \AltoRouter();
-$router->setBasePath('/v1');
-
 
 // Carrega as rotas
 require_once __DIR__ . '/../routes/web.php';
@@ -56,7 +54,13 @@ return new class($router, $database, $logger) {
             }
 
             $controller = new $controllerClass($this->db, $this->logger);
-            call_user_func_array([$controller, $method], $match['params']);
+            $response = call_user_func_array([$controller, $method], $match['params']);
+
+            if ($response instanceof \Symfony\Component\HttpFoundation\Response) {
+                $response->send();
+            } else {
+                echo $response;
+            }
         } else {
             header($_SERVER["SERVER_PROTOCOL"] . ' 404 Not Found');
             echo '404 - Página não encontrada';

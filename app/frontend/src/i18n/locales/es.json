@@ -1,0 +1,19 @@
+{
+  "title": "Iniciar sesión o registrarse",
+  "email": "Correo electrónico",
+  "email_model": "correo@ejemplo.com",
+  "password": "Contraseña",
+  "login": "Iniciar sesión",
+  "or": "o",
+  "continue_google": "Continuar con Google",
+  "continue_apple": "Continuar con Apple",
+  "language_selector_title": "Seleccione un idioma",
+  "register_title": "Regístrate gratis",
+  "name": "Nombre",
+  "surname": "Apellido",
+  "terms_text": "Al seleccionar 'Aceptar y crear cuenta', acepto los <terms>Términos</terms> y el <services>Contrato de servicios</services>. Lea nuestra <privacy>Política de privacidad</privacy> para saber cómo usamos y protegemos sus datos.",
+  "agree_create_account": "Aceptar y crear cuenta",
+  "no_account": "¿Aún no tienes cuenta?",
+  "register_link": "Regístrate",
+  "to_go_back": "Volver"
+}

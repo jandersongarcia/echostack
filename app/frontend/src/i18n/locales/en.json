@@ -1,0 +1,19 @@
+{
+  "title": "Sign in or register",
+  "email": "Email",
+  "email_model": "email@exemple.com",
+  "password": "Password",
+  "login": "Sign in",
+  "or": "or",
+  "continue_google": "Continue with Google",
+  "continue_apple": "Continue with Apple",
+  "language_selector_title": "Select a language",
+  "register_title": "Sign up for free",
+  "name": "First name",
+  "surname": "Last name",
+  "terms_text": "By selecting 'Agree and create account', you agree to the Terms and Service Agreement. Read our Privacy Policy to learn how we use and protect your data.",
+  "agree_create_account": "Agree and create account",
+  "no_account": "Don't have an account?",
+  "register_link": "Register",
+  "to_go_back": "Back"
+}

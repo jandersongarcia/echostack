@@ -1,0 +1,30 @@
+{
+    "name": "jandersongarcia/nubephp",
+    "description": "Simple BackEnd PHP",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/",
+            "Middleware\\": "middleware/"
+        }
+    },
+    "authors": [
+        {
+            "name": "JandersonGarcia"
+        }
+    ],
+    "require": {
+        "vlucas/phpdotenv": "^5.5",
+        "respect/validation": "^2.2",
+        "symfony/http-foundation": "^6.0",
+        "altorouter/altorouter": "^2.0",
+        "catfan/medoo": "^2.1",
+        "monolog/monolog": "^3.0"
+    },
+    "scripts": {
+        "generate-apikey": "php scripts/generate-apikey.php"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

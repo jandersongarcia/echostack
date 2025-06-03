@@ -1,0 +1,2 @@
+[2025-06-03T22:20:22.314475+02:00] app.WARNING: Route not found {"request_uri":"/v1/register","method":"POST"} []
+[2025-06-03T22:22:51.205948+02:00] app.WARNING: Route not found {"request_uri":"/v1/register","method":"GET"} []

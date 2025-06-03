@@ -3,16 +3,20 @@
 // Carrega o autoload do Composer
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// Carrega o Middleware
-//require_once __DIR__ . '/../middleware/AuthMiddleware.php';
-
-use Dotenv\Dotenv;
-
 // Carrega as variáveis de ambiente
-$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
-// Configurações do banco de dados (puxando do .env)
+// Validação das variáveis obrigatórias de banco de dados
+$requiredDbVars = ['DB_NAME', 'DB_HOST', 'DB_USER'];
+
+foreach ($requiredDbVars as $var) {
+    if (empty($_ENV[$var])) {
+        throw new Exception("The environment variable '{$var}' is not set or is empty.");
+    }
+}
+
+// Configurações do banco de dados
 $dbConfig = [
     'database_type' => 'mysql',
     'database_name' => $_ENV['DB_NAME'],
@@ -29,7 +33,7 @@ $appConfig = [
     'app_debug' => filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN),
 ];
 
-// Podemos retornar as configs juntas, se quiser centralizar
+// Retorna as configurações agrupadas
 return [
     'db' => $dbConfig,
     'app' => $appConfig,

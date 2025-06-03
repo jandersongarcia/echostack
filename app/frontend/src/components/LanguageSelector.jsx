@@ -8,9 +8,10 @@ export default function LanguageSelector() {
   const [showModal, setShowModal] = useState(false);
 
   const languages = [
-    { code: 'en', label: 'English (United States)' },
-    { code: 'es', label: 'Español (España)' },
-    { code: 'pt', label: 'Português (Brasil)' }
+    { code: 'en-GB', label: 'English (United Kingdom)' },
+    { code: 'en-US', label: 'English (United States)' },
+    { code: 'es-ES', label: 'Español (España)' },
+    { code: 'pt-BR', label: 'Português (Brasil)' }
   ];
 
   const changeLanguage = (lng) => {
@@ -20,12 +21,16 @@ export default function LanguageSelector() {
 
   return (
     <div style={{ position: 'absolute', top: 20, right: 20 }}>
-      <button onClick={() => setShowModal(true)} style={{
-        background: 'none',
-        border: 'none',
-        fontSize: '24px',
-        cursor: 'pointer'
-      }}>
+      <button 
+        onClick={() => setShowModal(true)} 
+        style={{
+          background: 'none',
+          border: 'none',
+          fontSize: '24px',
+          cursor: 'pointer'
+        }}
+        title={t('language_selector_title')}
+      >
         <FaGlobe />
       </button>
 

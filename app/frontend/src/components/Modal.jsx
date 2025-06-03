@@ -18,6 +18,7 @@ export default function Modal({ visible, title, onClose, children }) {
     padding: '20px 30px',
     borderRadius: '8px',
     minWidth: '300px',
+    maxWidth: '80%',
     maxHeight: '80vh',
     overflowY: 'auto'
   };

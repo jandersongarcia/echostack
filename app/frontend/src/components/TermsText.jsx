@@ -9,9 +9,9 @@ export default function TermsText({ openTerms, openServices, openPrivacy }) {
     <Typography variant="body2" color="textSecondary" mt={1}>
       <Trans i18nKey="terms_text"
         components={{
-          terms: <Link component="button" onClick={openTerms}></Link>,
-          services: <Link component="button" onClick={openServices}></Link>,
-          privacy: <Link component="button" onClick={openPrivacy}></Link>,
+          terms: <Link component="button" type="button" onClick={openTerms} />,
+          services: <Link component="button" type="button" onClick={openServices} />,
+          privacy: <Link component="button" type="button" onClick={openPrivacy} />
         }}
       />
     </Typography>

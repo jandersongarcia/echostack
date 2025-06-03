@@ -21,7 +21,7 @@ export default function Login() {
       <NavbarLogin />
 
       <Box flex={1} display="flex" justifyContent="center" alignItems="center">
-        <Box width="100%" maxWidth="400px" textAlign="center">
+        <Box width="100%" maxWidth="350px" textAlign="center">
 
           <Typography variant="h5" mb={3}>{t('title')}</Typography>
 

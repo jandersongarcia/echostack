@@ -9,3 +9,4 @@ $router->map('GET', '/', 'App\Controllers\HomeController@index');
 
 // Rota de cadastro
 $router->map('POST', '/register', 'App\Controllers\AuthController@register');
+

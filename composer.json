@@ -18,13 +18,15 @@
     "require": {
         "vlucas/phpdotenv": "^5.5",
         "respect/validation": "^2.2",
-        "symfony/http-foundation": "^6.0",
+        "symfony/http-foundation": "^7.0",
         "altorouter/altorouter": "^2.0",
         "catfan/medoo": "^2.1",
-        "monolog/monolog": "^3.0"
+        "monolog/monolog": "^3.0",
+        "symfony/console": "^7.3"
     },
     "scripts": {
-        "generate-apikey": "php scripts/generate-apikey.php"
+        "generate:apikey": "php scripts/generate-apikey.php",
+        "generate:crud": "php scripts/app.php generate:crud"
     },
     "minimum-stability": "stable",
     "prefer-stable": true

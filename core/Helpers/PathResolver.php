@@ -38,4 +38,9 @@ class PathResolver
     {
         return self::basePath() . DIRECTORY_SEPARATOR . 'scripts' . ($path ? DIRECTORY_SEPARATOR . $path : '');
     }
+
+    public static function composerPath(): string
+    {
+        return self::basePath() . DIRECTORY_SEPARATOR . 'composer.json';
+    }
 }

@@ -1,149 +1,65 @@
-# EchoAPI
+# EchoAPI 2.0
 
-EchoAPI é um microstack PHP minimalista, projetado para APIs enxutas, rápidas e fáceis de manter. Backend em PHP puro, frontend livre, comunicação via JSON, sem overhead de frameworks pesados.
-
-[Repositório Oficial no GitHub](https://github.com/jandersongarcia/EchoAPI)
+EchoAPI é um microstack PHP minimalista, projetado para APIs enxutas, rápidas e altamente manuteníveis. Agora com arquitetura profissionalizada, separando claramente o núcleo do sistema (Core) do código da aplicação (App).
 
 ---
 
-## Visão Geral
+## 📃 Visão Geral
 
 * **Backend**: PHP 8.x
 * **Frontend**: Livre (JS, React, Vue, etc)
 * **Comunicação**: API REST (JSON)
 * **Autoload**: PSR-4 via Composer
-* **Banco de Dados**: Medoo (abstração PDO)
+* **Banco de Dados**: Medoo (PDO Abstraction)
 * **Roteamento**: AltoRouter
-* **Logs**: Monolog
+* **Logs**: Monolog 3.x
 * **Validação**: Respect\Validation
 * **Ambiente**: Dotenv
 
 ---
 
-## Estrutura do Projeto
+## 🗂 Estrutura do Projeto Atualizada
 
 ```
 project-root/
 │
-├── app/                # Pasta exposta ao servidor web (ponto de entrada)
-│   ├── api/            # Endpoints da API do projeto (index.php, rotas públicas)
-│   └── frontend/       # (opcional) Arquivos estáticos do frontend (React, Vue, etc)
+├── app/                # (reservado para código público - frontend, se houver)
 │
-├── bootstrap/          # Código de inicialização e bootstrap da aplicação
+├── bootstrap/          # Inicialização e bootstrap da aplicação
 │
-├── config/             # Arquivos de configuração (DB, API keys, etc)
+├── config/             # Configurações de banco, credenciais, etc
 │
-├── logs/               # Arquivos de log (gerados pelo Monolog)
+├── core/               # Núcleo do EchoAPI (NÃO editável)
+│   ├── Helpers/        # Helpers centrais (ex: PathResolver)
+│   ├── Scripts/        # Scripts de automação (make-module, delete-module)
+│   ├── Services/       # Serviços internos do framework
+│   ├── Utils/          # Versão, System Info, HealthCheck, etc
+│   ├── Dispatcher.php  # Kernel principal
+│   └── MiddlewareLoader.php
 │
-├── middleware/         # Middlewares personalizados (ex: autenticação, CORS)
+├── logs/               # Logs de aplicação
 │
-├── routes/             # Definição das rotas da aplicação (ex: web.php, api.php)
+├── middleware/         # Middlewares customizados
 │
-├── scripts/            # Scripts utilitários (ex: geração de API keys)
+├── routes/             # Definição de rotas
 │
-├── src/                # Código fonte principal da aplicação
-│   ├── Controllers/    # Controladores (lógica de entrada das rotas)
-│   ├── Core/           # Núcleo da aplicação (ex: Kernel, Providers, Containers)
-│   ├── Models/         # Modelos de dados (representação das tabelas)
-│   ├── Services/       # Regras de negócio e serviços da aplicação
-│   └── Utils/          # Funções auxiliares e helpers
+├── src/                # Código da aplicação (personalizado pelo dev)
+│   ├── Controllers/    # Controllers de API
+│   ├── Models/         # Modelos de dados
+│   ├── Services/       # Regras de negócio
+│   ├── Validators/     # Validações customizadas
+│   └── Utils/          # Helpers adicionais
 │
-├── vendor/             # Dependências gerenciadas pelo Composer
+├── vendor/             # Dependências do Composer
 │
-├── .env                # Variáveis de ambiente (API keys, credenciais, configs)
-├── composer.json       # Configuração de dependências e autoload
+├── .env                # Variáveis de ambiente
+├── composer.json       # Configurações e versão
 └── README.md           # Documentação do projeto
 ```
 
-**Nota:** A pasta `app/` pode opcionalmente conter o frontend da aplicação (React, Vue, Angular, etc), permitindo servir API e UI no mesmo domínio durante o desenvolvimento ou produção simples.
-
 ---
 
-## Sistema de Logs
-
-O EchoAPI possui um sistema de logs estruturado, utilizando **Monolog 3.x**, para facilitar monitoramento, debugging e auditoria de segurança.
-
-### Localização dos logs
-
-Os arquivos de log ficam na pasta:
-
-```
-project-root/logs/
-```
-
-### Arquivos de log
-
-| Arquivo          | Níveis capturados                 | Descrição                                                                                                                                            |
-| ---------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **app.log**      | DEBUG, INFO, NOTICE               | Registro geral de operações da aplicação: inicializações, chamadas de API, execuções normais e mensagens de desenvolvimento.                         |
-| **errors.log**   | ERROR, CRITICAL, ALERT, EMERGENCY | Erros críticos, falhas de execução, exceções não tratadas e problemas de runtime. Essencial para troubleshooting.                                    |
-| **security.log** | WARNING até CRITICAL              | Tentativas inválidas de autenticação, falhas de autorização e atividades suspeitas de segurança. Auxilia em auditorias e investigação de incidentes. |
-
-### Observações
-
-* Certifique-se de conceder permissões de escrita na pasta `logs/` após a instalação.
-* Em ambiente de produção, recomenda-se implementar política de rotação de logs para evitar crescimento descontrolado dos arquivos.
-
-### Teste rápido de logs
-
-O EchoAPI inclui um script utilitário para testar a escrita de logs em todos os níveis.
-
-Para executar o teste de logs:
-
-```bash
-composer run-script log:test
-```
-
-Este comando irá:
-
-* Gerar mensagens de log em todos os níveis (DEBUG, INFO, WARNING, ERROR, CRITICAL, etc)
-* Validar se os arquivos `app.log`, `errors.log` e `security.log` estão sendo gerados corretamente.
-* Permitir verificar se o roteamento de níveis e handlers do Monolog está operando conforme o esperado.
-
----
-
-## Endpoint de Health Check
-
-O EchoAPI disponibiliza um endpoint de **verificação de saúde da aplicação**, últil para:
-
-* Monitoramento (UptimeRobot, Pingdom, etc)
-* Load Balancers
-* Orquestradores (Kubernetes, Docker)
-* CI/CD Pipelines
-
-### Endpoint
-
-```http
-GET /v1/health
-```
-
-### Resposta
-
-Exemplo de resposta completa:
-
-```json
-{
-  "pong": true,
-  "database": "ok",
-  "filesystem": "ok",
-  "telegram": "configured",
-  "version": "1.0.0"
-}
-```
-
-### O que cada campo representa:
-
-| Campo          | Significado                                                         |
-| -------------- | ------------------------------------------------------------------- |
-| **pong**       | Health básico da API (sempre `true` se a API respondeu)             |
-| **database**   | Verifica se há conexão ativa com o banco                            |
-| **filesystem** | Verifica se a pasta de logs está gravável                           |
-| **telegram**   | Verifica se as variáveis de ambiente do Telegram estão configuradas |
-| **version**    | Exibe a versão da aplicação (definida em `config/version.php`)      |
-
----
-
-## Instalação
+## 🔧 Instalação
 
 ### 1. Clone o repositório
 
@@ -158,15 +74,13 @@ cd EchoAPI
 composer install
 ```
 
-### 3. Configure as variáveis de ambiente
-
-O repositório já contém um arquivo de exemplo chamado `.env_root`. Renomeie-o para `.env`:
+### 3. Configure o ambiente
 
 ```bash
-mv .env_root .env
+cp .env_root .env
 ```
 
-Em seguida, edite o arquivo `.env` e preencha com as informações corretas do banco de dados e a chave de API:
+Edite o `.env`:
 
 ```ini
 API_KEY=suachavesecreta
@@ -177,9 +91,7 @@ DB_USER=root
 DB_PASS=senha
 ```
 
-### 4. Permissões (opcional)
-
-Garanta permissão de escrita para logs, se houver:
+### 4. Permissões
 
 ```bash
 mkdir logs
@@ -188,191 +100,110 @@ chmod -R 775 logs
 
 ---
 
-## Executando o servidor de desenvolvimento
+## 🔍 Health Check com Identidade
 
-```bash
-php -S localhost:8080 -t public
-```
-
-A API ficará acessível em: `http://localhost:8080`
-
----
-
-## Fluxo básico de requisição
-
-1. **Cliente** envia requisição HTTP para o endpoint
-2. **index.php (public/)** é o front-controller e inicia o autoload
-3. **Router** verifica a rota em `routes/web.php`
-4. **Middleware** valida a chamada e autentica (se aplicável)
-5. **Controller** processa a lógica de negócio
-6. **Resposta** enviada em JSON
-
----
-
-## Exemplo simples de rota
-
-Em `routes/web.php`:
-
-```php
-$router->map('GET', '/ping', function() {
-    header('Content-Type: application/json');
-    echo json_encode(['pong' => true]);
-});
-```
-
-### Testando a rota
-
-Como o EchoAPI está configurado para trabalhar com versionamento de API, o endpoint estará disponível em:
-
-```bash
-curl http://localhost:8080/v1/ping
-```
-
-Resposta:
-
-```json
-{"pong": true}
-```
-
----
-
-## Dependências principais (composer.json)
-
-```json
-"require": {
-    "vlucas/phpdotenv": "^5.5",
-    "respect/validation": "^2.2",
-    "symfony/http-foundation": "^6.0",
-    "altorouter/altorouter": "^2.0",
-    "catfan/medoo": "^2.1",
-    "monolog/monolog": "^3.0"
-}
-```
-
----
-
-## Scripts auxiliares
-
-### Geração de API Keys
-
-O EchoAPI utiliza **API Keys** como forma de autenticação e controle de acesso aos seus endpoints.
-
-A API Key é uma chave única que deve ser enviada junto às requisições para autorizar o acesso:
-
-Exemplo de envio no header:
+### Endpoint
 
 ```http
-Authorization: Bearer SUA_API_KEY
+GET /v1/
 ```
 
-Para gerar uma nova chave, execute o seguinte comando:
-
-```bash
-composer run-script generate-apikey
-```
-
-> ⚠ A chave gerada é automaticamente atualizada no arquivo `.env`. Não é necessário editar manualmente.
-
-Essa camada de segurança evita acessos não autorizados e permite maior controle sobre quem está utilizando a API.
-
----
-
-## Notificações de Erros via Telegram
-
-O EchoAPI permite o envio automático de mensagens de erro para o Telegram, através de integração nativa com o Monolog.
-
-### Habilitação
-
-Por padrão, a integração com o Telegram é opcional. Basta configurar as variáveis no arquivo `.env`:
-
-```ini
-TELEGRAM_BOT_TOKEN=seu_token_aqui
-TELEGRAM_CHAT_ID=seu_chat_id_aqui
-ERROR_NOTIFY_CATEGORIES=critical,error,alert
-```
-
-* `TELEGRAM_BOT_TOKEN`: Token de acesso do seu bot no Telegram.
-* `TELEGRAM_CHAT_ID`: ID do usuário ou grupo que irá receber as mensagens.
-* `ERROR_NOTIFY_CATEGORIES`: Define quais categorias de log serão enviadas ao Telegram.
-
-> ⚠ Se essas variáveis não estiverem preenchidas, a integração será automaticamente desativada.
-
----
-
-### Como obter o BOT\_TOKEN
-
-1. Abra o Telegram e converse com o **@BotFather**.
-2. Execute o comando `/newbot`.
-3. Escolha um nome e um username para o seu bot.
-4. O BotFather irá fornecer um token no formato:
-
-```
-123456789:ABCDefghIJKlmNOPqrSTUvwxYZ
-```
-
-Use este token no `TELEGRAM_BOT_TOKEN` do seu `.env`.
-
----
-
-### Como obter o CHAT\_ID
-
-#### Enviar para usuário (teste rápido)
-
-1. Envie qualquer mensagem ao seu bot.
-2. Acesse no navegador:
-
-```
-https://api.telegram.org/bot<SEU_BOT_TOKEN>/getUpdates
-```
-
-3. No retorno JSON, localize o campo `chat.id` ou `from.id`, que será o seu `TELEGRAM_CHAT_ID`.
-
-#### Enviar para um grupo
-
-1. Adicione o bot ao grupo.
-2. Envie uma mensagem no grupo.
-3. Acesse novamente:
-
-```
-https://api.telegram.org/bot<SEU_BOT_TOKEN>/getUpdates
-```
-
-4. No JSON, localize o `chat.id`. Para grupos, o ID normalmente começa com `-100`:
+### Resposta
 
 Exemplo:
 
+```
+🚁 EchoAPI - version: 2.0.0 | Live long and prosper 🖖
+```
+
+O controle de versão e assinatura é centralizado via:
+
+```php
+Core\Utils\SystemInfo::fullSignature();
+```
+
+A versão é lida automaticamente do `composer.json`:
+
 ```json
-"chat": {
-    "id": -1001234567890
+"extra": {
+  "echoapi-version": "2.0.0"
 }
 ```
 
-Neste caso:
+---
 
-```ini
-TELEGRAM_CHAT_ID=-1001234567890
+## 🔢 Scripts automatizados
+
+### Geração de Módulos
+
+Cria Controller, Model, Service, Validator e rotas automaticamente:
+
+```bash
+composer run make:module NomeDaEntidade
+```
+
+### Remoção de Módulos
+
+Deleta todos os arquivos e rotas gerados:
+
+```bash
+composer run delete:module NomeDaEntidade
+```
+
+### Teste de Logs
+
+Valida o sistema completo de logs:
+
+```bash
+composer run log:test
+```
+
+### Geração de API Key
+
+```bash
+composer run generate:apikey
 ```
 
 ---
 
-### Exemplo completo de configuração:
+## 🌟 Sistema de Logs
 
-```ini
-TELEGRAM_BOT_TOKEN=123456789:ABCDefghIJKlmNOPqrSTUvwxYZ
-TELEGRAM_CHAT_ID=-1001234567890
-ERROR_NOTIFY_CATEGORIES=critical,error
-```
+Local: `/logs/`
 
-Assim, apenas erros dos níveis `critical` e `error` serão notificados.
+| Arquivo          | Níveis capturados                 |
+| ---------------- | --------------------------------- |
+| **app.log**      | DEBUG, INFO, NOTICE               |
+| **errors.log**   | ERROR, CRITICAL, ALERT, EMERGENCY |
+| **security.log** | WARNING até CRITICAL              |
+
+Sistema completo baseado em **Monolog 3.x**.
 
 ---
 
-### 🔒 Observação de segurança:
+## 🔧 Tecnologias Base
 
-* **Nunca compartilhe seu BOT\_TOKEN publicamente.**
-* Use um chat de teste antes de ativar em produção.
+```json
+"require": {
+  "vlucas/phpdotenv": "^5.5",
+  "respect/validation": "^2.2",
+  "symfony/http-foundation": "^6.0",
+  "altorouter/altorouter": "^2.0",
+  "catfan/medoo": "^2.1",
+  "monolog/monolog": "^3.0",
+  "symfony/console": "^7.0"
+}
+```
 
-## Licença
+---
+
+## 🔒 Notificações via Telegram (opcional)
+
+Integração via Monolog: permite receber erros diretamente no Telegram.
+Totalmente configurável via `.env`.
+
+---
+
+## 💼 Licença
 
 MIT
 

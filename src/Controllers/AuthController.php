@@ -24,7 +24,7 @@ class AuthController
         $surname = $data['surname'] ?? null;
         $email = $data['email'] ?? null;
         $password = $data['password'] ?? null;
-        $language = $data['language'] ?? 'us';
+        $language = $data['language'] ?? 'en-US';
         $plan = 1;
 
         if (!$name || !$email || !$password) {

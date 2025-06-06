@@ -2,9 +2,15 @@
 
 use Dotenv\Dotenv;
 use Medoo\Medoo;
-use Monolog\Logger;
-use Monolog\Handler\StreamHandler;
 use Core\MiddlewareLoader;
+use App\Services\LoggerFactory;
+use App\Services\TelegramNotifier;
+use Monolog\Handler\AbstractProcessingHandler;
+use Monolog\LogRecord;
+use Monolog\Level;
+
+// Carrega o autoload
+require_once __DIR__ . '/../vendor/autoload.php';
 
 // Carrega variáveis de ambiente
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
@@ -16,9 +22,33 @@ $config = require __DIR__ . '/../config/config.php';
 // Inicializa banco de dados
 $database = new Medoo($config['db']);
 
-// Inicializa Logger
-$logger = new Logger('app');
-$logger->pushHandler(new StreamHandler(__DIR__ . '/../logs/app.log', Logger::DEBUG));
+// Inicializa Logger via Factory
+$logger = LoggerFactory::create();
+
+// Handler para envio ao Telegram (corrigido para Monolog 3.x)
+class TelegramHandler extends AbstractProcessingHandler
+{
+    private TelegramNotifier $notifier;
+
+    public function __construct(TelegramNotifier $notifier, Level $level = Level::Error, bool $bubble = true)
+    {
+        // Passa o valor numérico para o AbstractProcessingHandler
+        parent::__construct($level->value, $bubble);
+        $this->notifier = $notifier;
+    }
+
+    protected function write(LogRecord $record): void
+    {
+        $this->notifier->notify($record->level->getName(), $record->message);
+    }
+}
+
+// Só ativa Telegram se configurado no .env
+if (getenv('TELEGRAM_BOT_TOKEN') && getenv('TELEGRAM_CHAT_ID')) {
+    $notifier = new TelegramNotifier();
+    $telegramHandler = new TelegramHandler($notifier, Level::Critical);
+    $logger->pushHandler($telegramHandler);
+}
 
 // Inicializa Middleware Loader
 $middlewareLoader = new MiddlewareLoader($logger);
@@ -30,9 +60,8 @@ $router->setBasePath('/v1');
 // Carrega as rotas
 require_once __DIR__ . '/../routes/web.php';
 
-// Sistema de Dispatcher com Middleware
+// Dispatcher
 return new class ($router, $database, $logger, $middlewareLoader) {
-
     protected $router;
     protected $db;
     protected $logger;
@@ -54,9 +83,7 @@ return new class ($router, $database, $logger, $middlewareLoader) {
             if ($match) {
                 [$controllerClass, $method] = explode('@', $match['target']);
 
-                // Carrega e executa os middlewares
                 $middlewares = $this->middlewareLoader->load();
-
                 foreach ($middlewares as $middleware) {
                     $middleware->handle($_REQUEST);
                 }

@@ -1,8 +1,23 @@
+# Application environment
 APP_ENV=development
 APP_DEBUG=true
+
+# Database configuration
 DB_HOST=localhost
 DB_PORT=3306
 DB_NAME=database_name
 DB_USER=root
 DB_PASS=password
+
+# Telegram error notifications
+# Bot token provided by BotFather (example: 123456789:ABCDefghIJKlmNOPqrSTUvwxYZ)
+TELEGRAM_BOT_TOKEN=
+
+# Chat ID of the user or group (example: -1001234567890 for groups)
+TELEGRAM_CHAT_ID=
+
+# Error categories that will be sent to Telegram (example: critical,error,alert)
+ERROR_NOTIFY_CATEGORIES=critical,error,alert
+
+# API Key (generated via generate-apikey script)
 API_KEY=

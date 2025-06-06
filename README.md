@@ -24,29 +24,65 @@ EchoAPI é um microstack PHP minimalista, projetado para APIs enxutas, rápidas 
 
 ```
 project-root/
-|
-├── public/            # Pasta exposta ao servidor web (index.php)
-|
-├── src/               # Código fonte
-|   ├── Controllers/   # Controladores
-|   ├── Models/        # Modelos de dados
-|   ├── Services/      # Regras de negócio
-|   └── Utils/         # Funções auxiliares
-|
-├── middleware/        # Middlewares personalizados
-|
-├── config/            # Configurações da aplicação
-|
-├── routes/            # Definição de rotas (web.php)
-|
-├── scripts/           # Scripts auxiliares (ex: geração de API keys)
-|
-├── vendor/            # Dependências gerenciadas pelo Composer
-|
-├── .env               # Variáveis de ambiente (ex: API_KEY, DB)
-├── composer.json      # Dependências e autoload
-└── README.md          # Documentação
+│
+├── app/                # Pasta exposta ao servidor web (ponto de entrada)
+│   ├── api/            # Endpoints da API do projeto (index.php, rotas públicas)
+│   └── frontend/       # (opcional) Arquivos estáticos do frontend (React, Vue, etc)
+│
+├── bootstrap/          # Código de inicialização e bootstrap da aplicação
+│
+├── config/             # Arquivos de configuração (DB, API keys, etc)
+│
+├── logs/               # Arquivos de log (gerados pelo Monolog)
+│
+├── middleware/         # Middlewares personalizados (ex: autenticação, CORS)
+│
+├── routes/             # Definição das rotas da aplicação (ex: web.php, api.php)
+│
+├── scripts/            # Scripts utilitários (ex: geração de API keys)
+│
+├── src/                # Código fonte principal da aplicação
+│   ├── Controllers/    # Controladores (lógica de entrada das rotas)
+│   ├── Core/           # Núcleo da aplicação (ex: Kernel, Providers, Containers)
+│   ├── Models/         # Modelos de dados (representação das tabelas)
+│   ├── Services/       # Regras de negócio e serviços da aplicação
+│   └── Utils/          # Funções auxiliares e helpers
+│
+├── vendor/             # Dependências gerenciadas pelo Composer
+│
+├── .env                # Variáveis de ambiente (API keys, credenciais, configs)
+├── composer.json       # Configuração de dependências e autoload
+└── README.md           # Documentação do projeto
 ```
+
+**Nota:** A pasta `app/` pode opcionalmente conter o frontend da aplicação (React, Vue, Angular, etc), permitindo servir API e UI no mesmo domínio durante o desenvolvimento ou produção simples.
+
+---
+
+## Sistema de Logs
+
+O EchoAPI possui um sistema de logs estruturado, utilizando **Monolog 3.x**, para facilitar monitoramento, debugging e auditoria de segurança.
+
+### Localização dos logs
+
+Os arquivos de log ficam na pasta:
+
+```
+project-root/logs/
+```
+
+### Arquivos de log
+
+| Arquivo          | Níveis capturados                 | Descrição                                                                                                                                            |
+| ---------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **app.log**      | DEBUG, INFO, NOTICE               | Registro geral de operações da aplicação: inicializações, chamadas de API, execuções normais e mensagens de desenvolvimento.                         |
+| **errors.log**   | ERROR, CRITICAL, ALERT, EMERGENCY | Erros críticos, falhas de execução, exceções não tratadas e problemas de runtime. Essencial para troubleshooting.                                    |
+| **security.log** | WARNING até CRITICAL              | Tentativas inválidas de autenticação, falhas de autorização e atividades suspeitas de segurança. Auxilia em auditorias e investigação de incidentes. |
+
+### Observações
+
+* Certifique-se de conceder permissões de escrita na pasta `logs/` após a instalação.
+* Em ambiente de produção, recomenda-se implementar política de rotação de logs para evitar crescimento descontrolado dos arquivos.
 
 ---
 
@@ -178,11 +214,106 @@ Para gerar uma nova chave, execute o seguinte comando:
 composer run-script generate-apikey
 ```
 
-> ⚠ Não esqueça de atualizar o valor de `API_KEY` no arquivo `.env` após gerar uma nova chave.
+> ⚠ A chave gerada é automaticamente atualizada no arquivo `.env`. Não é necessário editar manualmente.
 
 Essa camada de segurança evita acessos não autorizados e permite maior controle sobre quem está utilizando a API.
 
 ---
+
+## Notificações de Erros via Telegram
+
+O EchoAPI permite o envio automático de mensagens de erro para o Telegram, através de integração nativa com o Monolog.
+
+### Habilitação
+
+Por padrão, a integração com o Telegram é opcional. Basta configurar as variáveis no arquivo `.env`:
+
+```ini
+TELEGRAM_BOT_TOKEN=seu_token_aqui
+TELEGRAM_CHAT_ID=seu_chat_id_aqui
+ERROR_NOTIFY_CATEGORIES=critical,error,alert
+```
+
+* `TELEGRAM_BOT_TOKEN`: Token de acesso do seu bot no Telegram.
+* `TELEGRAM_CHAT_ID`: ID do usuário ou grupo que irá receber as mensagens.
+* `ERROR_NOTIFY_CATEGORIES`: Define quais categorias de log serão enviadas ao Telegram.
+
+> ⚠ Se essas variáveis não estiverem preenchidas, a integração será automaticamente desativada.
+
+---
+
+### Como obter o BOT\_TOKEN
+
+1. Abra o Telegram e converse com o **@BotFather**.
+2. Execute o comando `/newbot`.
+3. Escolha um nome e um username para o seu bot.
+4. O BotFather irá fornecer um token no formato:
+
+```
+123456789:ABCDefghIJKlmNOPqrSTUvwxYZ
+```
+
+Use este token no `TELEGRAM_BOT_TOKEN` do seu `.env`.
+
+---
+
+### Como obter o CHAT\_ID
+
+#### Enviar para usuário (teste rápido)
+
+1. Envie qualquer mensagem ao seu bot.
+2. Acesse no navegador:
+
+```
+https://api.telegram.org/bot<SEU_BOT_TOKEN>/getUpdates
+```
+
+3. No retorno JSON, localize o campo `chat.id` ou `from.id`, que será o seu `TELEGRAM_CHAT_ID`.
+
+#### Enviar para um grupo
+
+1. Adicione o bot ao grupo.
+2. Envie uma mensagem no grupo.
+3. Acesse novamente:
+
+```
+https://api.telegram.org/bot<SEU_BOT_TOKEN>/getUpdates
+```
+
+4. No JSON, localize o `chat.id`. Para grupos, o ID normalmente começa com `-100`:
+
+Exemplo:
+
+```json
+"chat": {
+    "id": -1001234567890
+}
+```
+
+Neste caso:
+
+```ini
+TELEGRAM_CHAT_ID=-1001234567890
+```
+
+---
+
+### Exemplo completo de configuração:
+
+```ini
+TELEGRAM_BOT_TOKEN=123456789:ABCDefghIJKlmNOPqrSTUvwxYZ
+TELEGRAM_CHAT_ID=-1001234567890
+ERROR_NOTIFY_CATEGORIES=critical,error
+```
+
+Assim, apenas erros dos níveis `critical` e `error` serão notificados.
+
+---
+
+### 🔒 Observação de segurança:
+
+* **Nunca compartilhe seu BOT\_TOKEN publicamente.**
+* Use um chat de teste antes de ativar em produção.
 
 ## Licença
 

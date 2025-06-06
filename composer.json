@@ -25,6 +25,7 @@
         "symfony/console": "^7.3"
     },
     "scripts": {
+        "log:test": "php scripts/log-test.php",
         "generate:apikey": "php scripts/generate-apikey.php",
         "generate:crud": "php scripts/app.php generate:crud"
     },

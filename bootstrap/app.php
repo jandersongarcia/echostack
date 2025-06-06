@@ -7,12 +7,12 @@
 use Dotenv\Dotenv;
 use Medoo\Medoo;
 use Core\MiddlewareLoader;
-use App\Services\LoggerFactory;
-use App\Services\TelegramNotifier;
+use Core\Services\LoggerFactory;
+use Core\Services\TelegramNotifier;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\LogRecord;
 use Monolog\Level;
-use Core\Dispatcher; // Já assumindo que você criou o Dispatcher separado
+use Core\Dispatcher;
 
 // Carrega o autoload do Composer
 require_once __DIR__ . '/../vendor/autoload.php';

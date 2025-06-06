@@ -1,17 +1,29 @@
 <?php
 
-function generateApiKey($length = 32) {
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+use Core\Helpers\PathResolver;
+
+function generateApiKey(int $length = 32): string
+{
     return bin2hex(random_bytes($length / 2));
 }
 
-$envPath = __DIR__ . '/../.env';
+$envPath = PathResolver::envPath();
 $newKey = generateApiKey();
 
 if (!file_exists($envPath)) {
-    // Cria o arquivo inteiro com a nova chave
+    if (!is_writable(dirname($envPath))) {
+        exit("❌ Permission denied: cannot write .env file in project root.\n");
+    }
+
     file_put_contents($envPath, "API_KEY={$newKey}\n");
-    echo "Arquivo .env criado e API_KEY definida.\n";
+    echo "✅ .env file created and API_KEY set.\n";
 } else {
+    if (!is_writable($envPath)) {
+        exit("❌ Permission denied: cannot modify existing .env file.\n");
+    }
+
     $envContent = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     $keyUpdated = false;
 
@@ -27,7 +39,7 @@ if (!file_exists($envPath)) {
     }
 
     file_put_contents($envPath, implode(PHP_EOL, $envContent) . PHP_EOL);
-    echo "API_KEY atualizada com sucesso.\n";
+    echo "✅ API_KEY successfully updated.\n";
 }
 
-echo "Nova API_KEY: {$newKey}\n";
+echo "🔑 New API_KEY: {$newKey}\n";

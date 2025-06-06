@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace Core\Services;
 
 use Monolog\Logger;
 use Monolog\Level;

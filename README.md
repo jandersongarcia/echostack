@@ -84,6 +84,63 @@ project-root/logs/
 * Certifique-se de conceder permissões de escrita na pasta `logs/` após a instalação.
 * Em ambiente de produção, recomenda-se implementar política de rotação de logs para evitar crescimento descontrolado dos arquivos.
 
+### Teste rápido de logs
+
+O EchoAPI inclui um script utilitário para testar a escrita de logs em todos os níveis.
+
+Para executar o teste de logs:
+
+```bash
+composer run-script log:test
+```
+
+Este comando irá:
+
+* Gerar mensagens de log em todos os níveis (DEBUG, INFO, WARNING, ERROR, CRITICAL, etc)
+* Validar se os arquivos `app.log`, `errors.log` e `security.log` estão sendo gerados corretamente.
+* Permitir verificar se o roteamento de níveis e handlers do Monolog está operando conforme o esperado.
+
+---
+
+## Endpoint de Health Check
+
+O EchoAPI disponibiliza um endpoint de **verificação de saúde da aplicação**, últil para:
+
+* Monitoramento (UptimeRobot, Pingdom, etc)
+* Load Balancers
+* Orquestradores (Kubernetes, Docker)
+* CI/CD Pipelines
+
+### Endpoint
+
+```http
+GET /v1/health
+```
+
+### Resposta
+
+Exemplo de resposta completa:
+
+```json
+{
+  "pong": true,
+  "database": "ok",
+  "filesystem": "ok",
+  "telegram": "configured",
+  "version": "1.0.0"
+}
+```
+
+### O que cada campo representa:
+
+| Campo          | Significado                                                         |
+| -------------- | ------------------------------------------------------------------- |
+| **pong**       | Health básico da API (sempre `true` se a API respondeu)             |
+| **database**   | Verifica se há conexão ativa com o banco                            |
+| **filesystem** | Verifica se a pasta de logs está gravável                           |
+| **telegram**   | Verifica se as variáveis de ambiente do Telegram estão configuradas |
+| **version**    | Exibe a versão da aplicação (definida em `config/version.php`)      |
+
 ---
 
 ## Instalação

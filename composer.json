@@ -7,7 +7,7 @@
         "psr-4": {
             "App\\": "src/",
             "Middleware\\": "middleware/",
-            "Core\\": "src/Core/"
+            "Core\\": "core/"
         }
     },
     "authors": [
@@ -25,9 +25,10 @@
         "symfony/console": "^7.3"
     },
     "scripts": {
-        "log:test": "php scripts/log-test.php",
-        "generate:apikey": "php scripts/generate-apikey.php",
-        "generate:crud": "php scripts/app.php generate:crud"
+        "log:test": "php core/Scripts/log-test.php",
+        "generate:apikey": "php core/Scripts/generate-apikey.php",
+        "make:module": "php core/Scripts/make-module.php make:module",
+        "delete:module": "php core/Scripts/delete-module.php delete:module"
     },
     "minimum-stability": "stable",
     "prefer-stable": true

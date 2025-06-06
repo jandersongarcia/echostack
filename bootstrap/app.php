@@ -9,6 +9,7 @@ use Medoo\Medoo;
 use Core\MiddlewareLoader;
 use Core\Services\LoggerFactory;
 use Core\Services\TelegramNotifier;
+use Core\Helpers\LogLevelHelper;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\LogRecord;
 use Monolog\Level;
@@ -21,9 +22,9 @@ require_once __DIR__ . '/../vendor/autoload.php';
 // AMBIENTE E CONFIGURAÇÃO
 // ==========================
 
-// Carrega variáveis de ambiente
+// Carrega variáveis de ambiente antes de tudo
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+$dotenv->safeLoad();  // safeLoad evita exceção caso o .env falhe
 
 // Carrega arquivo de configuração
 $config = require __DIR__ . '/../config/config.php';
@@ -60,11 +61,18 @@ class TelegramHandler extends AbstractProcessingHandler
     }
 }
 
-// Se variáveis de ambiente do Telegram existirem, adiciona o handler
-if (getenv('TELEGRAM_BOT_TOKEN') && getenv('TELEGRAM_CHAT_ID')) {
+// Lê as variáveis diretamente do $_ENV (mais seguro e portável)
+if (!empty($_ENV['TELEGRAM_BOT_TOKEN']) && !empty($_ENV['TELEGRAM_CHAT_ID'])) {
     $notifier = new TelegramNotifier();
-    $telegramHandler = new TelegramHandler($notifier, Level::Critical);
+    $level = LogLevelHelper::getTelegramLogLevel();
+    $telegramHandler = new TelegramHandler($notifier, $level);
+    // Primeiro o Telegram (externo, alta prioridade)
     $logger->pushHandler($telegramHandler);
+
+    // Depois os handlers locais
+    $logger->pushHandler($appHandler);
+    $logger->pushHandler($filteredSecurityHandler);
+    $logger->pushHandler($errorHandler);
 }
 
 // ==========================

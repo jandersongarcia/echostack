@@ -1,6 +1,6 @@
 # EchoAPI 2.0
 
-EchoAPI é um microstack PHP minimalista, projetado para APIs enxutas, rápidas e altamente manuteníveis. Agora com arquitetura profissionalizada, separando claramente o núcleo do sistema (Core) do código da aplicação (App).
+EchoAPI é um microstack PHP minimalista, projetado para APIs enxutas, rápidas e altamente manutenáveis. Agora com arquitetura profissionalizada, separando claramente o núcleo do sistema (Core) do código da aplicação (App).
 
 ---
 
@@ -139,7 +139,7 @@ A versão é lida automaticamente do `composer.json`:
 Cria Controller, Model, Service, Validator e rotas automaticamente:
 
 ```bash
-composer run make:module NomeDaEntidade
+composer make:module NomeDaEntidade
 ```
 
 ### Remoção de Módulos
@@ -147,7 +147,7 @@ composer run make:module NomeDaEntidade
 Deleta todos os arquivos e rotas gerados:
 
 ```bash
-composer run delete:module NomeDaEntidade
+composer delete:module NomeDaEntidade
 ```
 
 ### Teste de Logs
@@ -155,18 +155,18 @@ composer run delete:module NomeDaEntidade
 Valida o sistema completo de logs:
 
 ```bash
-composer run log:test
+composer log:test
 ```
 
 ### Geração de API Key
 
 ```bash
-composer run generate:apikey
+composer generate-apikey
 ```
 
 ---
 
-## 🌟 Sistema de Logs
+## 🔟 Sistema de Logs
 
 Local: `/logs/`
 
@@ -177,6 +177,64 @@ Local: `/logs/`
 | **security.log** | WARNING até CRITICAL              |
 
 Sistema completo baseado em **Monolog 3.x**.
+
+---
+
+## 🔒 Integração com Telegram
+
+O EchoAPI permite o envio de logs críticos diretamente para o Telegram via Monolog.
+
+### Configuração no `.env`
+
+```ini
+TELEGRAM_BOT_TOKEN=seu_token_aqui
+TELEGRAM_CHAT_ID=seu_chat_id_aqui
+ERROR_NOTIFY_CATEGORIES=critical,error,alert
+```
+
+* `TELEGRAM_BOT_TOKEN`: Token gerado via BotFather.
+* `TELEGRAM_CHAT_ID`: ID do chat (ou grupo) para onde o EchoAPI enviará os logs.
+* `ERROR_NOTIFY_CATEGORIES`: Quais níveis de log o Telegram receberá.
+
+### Como obter o BOT\_TOKEN
+
+1. Fale com o **@BotFather** no Telegram
+2. Execute `/newbot`
+3. Escolha nome e username
+4. O BotFather fornecerá um token como:
+
+```
+123456789:ABCDefghIJKlmNOPqrSTUvwxYZ
+```
+
+### Como obter o CHAT\_ID
+
+#### Para usuário
+
+1. Converse com seu bot.
+2. Acesse:
+
+```
+https://api.telegram.org/bot<SEU_BOT_TOKEN>/getUpdates
+```
+
+3. O campo `chat.id` é o seu `TELEGRAM_CHAT_ID`.
+
+#### Para grupos
+
+1. Adicione o bot ao grupo.
+2. Envie uma mensagem.
+3. Consulte novamente `/getUpdates` e capture o `chat.id` (geralmente inicia com `-100`).
+
+### Exemplo final de configuração
+
+```ini
+TELEGRAM_BOT_TOKEN=123456789:ABCDefghIJKlmNOPqrSTUvwxYZ
+TELEGRAM_CHAT_ID=-1001234567890
+ERROR_NOTIFY_CATEGORIES=critical,error
+```
+
+> Obs: Se não configurar o Telegram, o EchoAPI opera normalmente sem a funcionalidade de notificacão.
 
 ---
 
@@ -193,13 +251,6 @@ Sistema completo baseado em **Monolog 3.x**.
   "symfony/console": "^7.0"
 }
 ```
-
----
-
-## 🔒 Notificações via Telegram (opcional)
-
-Integração via Monolog: permite receber erros diretamente no Telegram.
-Totalmente configurável via `.env`.
 
 ---
 

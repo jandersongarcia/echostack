@@ -4,6 +4,11 @@ namespace Core\Helpers;
 
 class PathResolver
 {
+
+    public static function vendorPath(): string
+    {
+        return self::basePath() . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+    }
     public static function basePath(): string
     {
         return dirname(__DIR__, 2);

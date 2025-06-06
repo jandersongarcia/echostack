@@ -4,7 +4,7 @@
     "type": "project",
     "license": "MIT",
     "extra": {
-        "echoapi-version": "2.0.0"
+        "echoapi-version": "2.1.0"
     },
     "autoload": {
         "psr-4": {
@@ -29,6 +29,7 @@
     },
     "scripts": {
         "log:test": "php core/Scripts/log-test.php",
+        "telegram:test": "php core/Scripts/telegram-test.php",
         "generate:apikey": "php core/Scripts/generate-apikey.php",
         "make:module": "php core/Scripts/make-module.php make:module",
         "delete:module": "php core/Scripts/delete-module.php delete:module"

@@ -4,7 +4,7 @@ EchoAPI é um microstack PHP minimalista, projetado para APIs enxutas, rápidas 
 
 ---
 
-## 📃 Visão Geral
+## Visão Geral
 
 * **Backend**: PHP 8.x
 * **Frontend**: Livre (JS, React, Vue, etc)
@@ -18,7 +18,7 @@ EchoAPI é um microstack PHP minimalista, projetado para APIs enxutas, rápidas 
 
 ---
 
-## 🗂 Estrutura do Projeto Atualizada
+## Estrutura do Projeto Atualizada
 
 ```
 project-root/
@@ -59,7 +59,7 @@ project-root/
 
 ---
 
-## 🔧 Instalação
+## Instalação
 
 ### 1. Clone o repositório
 
@@ -75,7 +75,8 @@ composer install
 ```
 
 ### 3. Configure o ambiente
-Renomeie o arquivo *.env_root* para *.env*
+
+Renomeie o arquivo *.env\_root* para *.env*
 
 ```bash
 cp .env_root .env
@@ -101,7 +102,7 @@ chmod -R 775 logs
 
 ---
 
-## 🔄 Fluxo de execução de um endpoint
+## Fluxo de execução de um endpoint
 
 1. O cliente faz uma requisição HTTP (ex: `GET /v1/health`)
 2. `public/index.php` é o Front Controller que inicia autoload e Dispatcher.
@@ -113,7 +114,7 @@ chmod -R 775 logs
 
 ---
 
-## ➕ Exemplo simples de rota
+## Exemplo simples de rota
 
 Arquivo: `routes/web.php`
 
@@ -138,7 +139,7 @@ Resposta:
 
 ---
 
-## 🔐 Autenticação via API Key
+## Autenticação via API Key
 
 O EchoAPI suporta autenticação de chamadas usando API Key.
 
@@ -158,7 +159,7 @@ Se a chave estiver ausente ou incorreta, a requisição será bloqueada pelo mid
 
 ---
 
-## 🔍 Health Check com Identidade
+## Health Check com Identidade
 
 ### Endpoint
 
@@ -169,7 +170,7 @@ GET /v1/
 ### Resposta exemplo
 
 ```
-🚁 EchoAPI - version: 2.0.0 | Live long and prosper 🖖
+EchoAPI - version: 2.0.0 | Live long and prosper 🖖
 ```
 
 Controlado pelo `Core\Utils\SystemInfo::fullSignature()` e pelo campo `extra` no `composer.json`:
@@ -182,7 +183,7 @@ Controlado pelo `Core\Utils\SystemInfo::fullSignature()` e pelo campo `extra` no
 
 ---
 
-## 🔢 Scripts automatizados
+## Scripts automatizados
 
 ### Geração de Módulos
 
@@ -210,7 +211,7 @@ composer generate:apikey
 
 ---
 
-## 🔐 Sistema de Logs
+## Sistema de Logs
 
 Local: `/logs/`
 
@@ -224,7 +225,7 @@ Sistema baseado em **Monolog 3.x**.
 
 ---
 
-## 🔒 Integração com Telegram
+## Integração com Telegram
 
 ### Configuração no `.env`
 
@@ -266,7 +267,27 @@ https://api.telegram.org/bot<SEU_BOT_TOKEN>/getUpdates
 
 ---
 
-## 💪 Tecnologias Base
+## Documentação da API (Swagger)
+
+A documentação da API é gerada automaticamente com base nas anotações do Swagger (OpenAPI) nos arquivos do projeto.
+
+### Como gerar a documentação
+
+```bash
+composer swagger:build
+```
+
+O arquivo será gerado em:
+
+```
+app/docs/openapi.json
+```
+
+Você pode visualizá-lo usando qualquer visualizador Swagger, como o [Swagger UI](https://editor.swagger.io/), apontando para esse JSON.
+
+---
+
+## Tecnologias Base
 
 ```json
 "require": {
@@ -282,7 +303,7 @@ https://api.telegram.org/bot<SEU_BOT_TOKEN>/getUpdates
 
 ---
 
-## 💼 Licença
+## Licença
 
 MIT
 

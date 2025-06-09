@@ -24,6 +24,8 @@ EchoAPI é um microstack PHP minimalista, projetado para APIs enxutas, rápidas 
 project-root/
 │
 ├── app/                # (reservado para código público - frontend, se houver)
+│   ├── api/            # Responsável por conectar ao backend
+│   └── docs/           # Documentação gerada (openapi.json)
 │
 ├── bootstrap/          # Inicialização e bootstrap da aplicação
 │

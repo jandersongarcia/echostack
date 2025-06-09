@@ -1,0 +1,23 @@
+{
+  "loginTitle": "Fazer login",
+  "email": "Email",
+  "password": "Senha",
+  "confirmPassword": "Digite a senha novamente",
+  "rememberMe": "Lembre-se de mim",
+  "forgotPassword": "Esqueceu a sua senha?",
+  "loginButton": "Fazer login",
+  "noAccount": "Ainda não tem uma conta?",
+  "registerNow": "Cadastre-se agora",
+  "createAccount": "Criar conta",
+  "firstName": "Nome",
+  "lastName": "Sobrenome",
+  "registerButton": "Cadastrar",
+  "termsNotice": "Eu li e entendi os Termos de serviço.",
+  "alreadyHaveAccount" : "Já possui uma conta?",
+  "passwordPtrength": "A senha deve ter pelo menos 6 caracteres, incluir maiúsculas, minúsculas, números e símbolos.",
+  "recoveryTitle": "Recuperação de conta",
+  "recoveryEmailTitle": "Email da conta:",
+  "recoveryDescription": "Por favor, digite o email da conta que você quer recuperar. Se você não conseguir lembrar qual é, por favor, deixe o campo em branco.",
+  "startButton": "Começar",
+  "backToLogin": "Voltar para a tela de login"
+}

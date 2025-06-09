@@ -1,6 +1,6 @@
 # EchoAPI 2.0
 
-EchoAPI é um microstack PHP minimalista, projetado para APIs enxutas, rápidas e altamente manutenáveis. Agora com arquitetura profissionalizada, separando claramente o núcleo do sistema (Core) do código da aplicação (App).
+EchoAPI é um microstack PHP minimalista, projetado para APIs enxutas, rápidas e altamente manutenáveis.
 
 ---
 
@@ -29,7 +29,7 @@ project-root/
 │
 ├── config/             # Configurações de banco, credenciais, etc
 │
-├── core/               # Núcleo do EchoAPI (NÃO editável)
+├── core/               # Núcleo do EchoAPI (NAO editável)
 │   ├── Helpers/        # Helpers centrais (ex: PathResolver)
 │   ├── Scripts/        # Scripts de automação (make-module, delete-module)
 │   ├── Services/       # Serviços internos do framework
@@ -75,6 +75,7 @@ composer install
 ```
 
 ### 3. Configure o ambiente
+Renomeie o arquivo *.env_root* para *.env*
 
 ```bash
 cp .env_root .env
@@ -100,6 +101,63 @@ chmod -R 775 logs
 
 ---
 
+## 🔄 Fluxo de execução de um endpoint
+
+1. O cliente faz uma requisição HTTP (ex: `GET /v1/health`)
+2. `public/index.php` é o Front Controller que inicia autoload e Dispatcher.
+3. O `Dispatcher` carrega middlewares (ex: autenticação, CORS, validação de API Key).
+4. O `AltoRouter` resolve a rota com base no arquivo `routes/`.
+5. O Controller correspondente é chamado.
+6. Controller aciona regras de negócio via Services e Models.
+7. A resposta é enviada ao cliente em JSON.
+
+---
+
+## ➕ Exemplo simples de rota
+
+Arquivo: `routes/web.php`
+
+```php
+$router->map('GET', '/health', function() {
+    header('Content-Type: application/json');
+    echo json_encode(['pong' => true]);
+});
+```
+
+Teste local:
+
+```bash
+curl http://localhost:8080/v1/health
+```
+
+Resposta:
+
+```json
+{"pong":true,"database":"ok","filesystem":"ok","telegram":"configured","version":"2.x.x"}
+```
+
+---
+
+## 🔐 Autenticação via API Key
+
+O EchoAPI suporta autenticação de chamadas usando API Key.
+
+Para criar uma chave secreta, use o comando no prompt
+
+```bash
+composer generate-apikey
+```
+
+Inclua o header nas requisições:
+
+```http
+Authorization: Bearer SUA_API_KEY
+```
+
+Se a chave estiver ausente ou incorreta, a requisição será bloqueada pelo middleware de autenticação.
+
+---
+
 ## 🔍 Health Check com Identidade
 
 ### Endpoint
@@ -108,21 +166,13 @@ chmod -R 775 logs
 GET /v1/
 ```
 
-### Resposta
-
-Exemplo:
+### Resposta exemplo
 
 ```
 🚁 EchoAPI - version: 2.0.0 | Live long and prosper 🖖
 ```
 
-O controle de versão e assinatura é centralizado via:
-
-```php
-Core\Utils\SystemInfo::fullSignature();
-```
-
-A versão é lida automaticamente do `composer.json`:
+Controlado pelo `Core\Utils\SystemInfo::fullSignature()` e pelo campo `extra` no `composer.json`:
 
 ```json
 "extra": {
@@ -136,23 +186,17 @@ A versão é lida automaticamente do `composer.json`:
 
 ### Geração de Módulos
 
-Cria Controller, Model, Service, Validator e rotas automaticamente:
-
 ```bash
 composer make:module NomeDaEntidade
 ```
 
 ### Remoção de Módulos
 
-Deleta todos os arquivos e rotas gerados:
-
 ```bash
 composer delete:module NomeDaEntidade
 ```
 
 ### Teste de Logs
-
-Valida o sistema completo de logs:
 
 ```bash
 composer log:test
@@ -166,7 +210,7 @@ composer generate-apikey
 
 ---
 
-## 🔟 Sistema de Logs
+## 🔐 Sistema de Logs
 
 Local: `/logs/`
 
@@ -176,13 +220,11 @@ Local: `/logs/`
 | **errors.log**   | ERROR, CRITICAL, ALERT, EMERGENCY |
 | **security.log** | WARNING até CRITICAL              |
 
-Sistema completo baseado em **Monolog 3.x**.
+Sistema baseado em **Monolog 3.x**.
 
 ---
 
 ## 🔒 Integração com Telegram
-
-O EchoAPI permite o envio de logs críticos diretamente para o Telegram via Monolog.
 
 ### Configuração no `.env`
 
@@ -192,24 +234,20 @@ TELEGRAM_CHAT_ID=seu_chat_id_aqui
 ERROR_NOTIFY_CATEGORIES=critical,error,alert
 ```
 
-* `TELEGRAM_BOT_TOKEN`: Token gerado via BotFather.
-* `TELEGRAM_CHAT_ID`: ID do chat (ou grupo) para onde o EchoAPI enviará os logs.
-* `ERROR_NOTIFY_CATEGORIES`: Quais níveis de log o Telegram receberá.
+#### Como obter o BOT\_TOKEN
 
-### Como obter o BOT\_TOKEN
-
-1. Fale com o **@BotFather** no Telegram
-2. Execute `/newbot`
-3. Escolha nome e username
-4. O BotFather fornecerá um token como:
+1. Converse com **@BotFather**
+2. Use o comando `/newbot`
+3. Defina nome e username
+4. Obtenha o token:
 
 ```
 123456789:ABCDefghIJKlmNOPqrSTUvwxYZ
 ```
 
-### Como obter o CHAT\_ID
+#### Como obter o CHAT\_ID
 
-#### Para usuário
+**Para usuário:**
 
 1. Converse com seu bot.
 2. Acesse:
@@ -218,27 +256,17 @@ ERROR_NOTIFY_CATEGORIES=critical,error,alert
 https://api.telegram.org/bot<SEU_BOT_TOKEN>/getUpdates
 ```
 
-3. O campo `chat.id` é o seu `TELEGRAM_CHAT_ID`.
+3. Capture o `chat.id`.
 
-#### Para grupos
+**Para grupos:**
 
-1. Adicione o bot ao grupo.
-2. Envie uma mensagem.
-3. Consulte novamente `/getUpdates` e capture o `chat.id` (geralmente inicia com `-100`).
-
-### Exemplo final de configuração
-
-```ini
-TELEGRAM_BOT_TOKEN=123456789:ABCDefghIJKlmNOPqrSTUvwxYZ
-TELEGRAM_CHAT_ID=-1001234567890
-ERROR_NOTIFY_CATEGORIES=critical,error
-```
-
-> Obs: Se não configurar o Telegram, o EchoAPI opera normalmente sem a funcionalidade de notificacão.
+1. Adicione o bot no grupo.
+2. Envie mensagem no grupo.
+3. Consulte novamente `/getUpdates` para capturar o `chat.id` (começa com `-100`).
 
 ---
 
-## 🔧 Tecnologias Base
+## 💪 Tecnologias Base
 
 ```json
 "require": {

@@ -1,0 +1,67 @@
+openapi: 3.0.3
+info:
+  title: EchoAPI
+  description: API feita com PHP puro e arquitetura modular.
+  version: "2.0.0"
+  contact:
+    name: Janderson Garcia
+    url: https://github.com/jandersongarcia
+
+servers:
+  - url: http://localhost:8080/v1
+    description: Ambiente local
+
+paths:
+  /:
+    get:
+      summary: Health Check
+      description: Verifica a disponibilidade da API e retorna a assinatura do sistema.
+      responses:
+        "200":
+          description: Resposta de sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "EchoAPI - version: 2.0.0 | Live long and prosper 🖖"
+
+  /health:
+  get:
+    summary: Teste de conexão
+    description: Endpoint de teste simples para validar se a API está respondendo e os principais serviços estão funcionando.
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pong:
+                  type: boolean
+                  example: true
+                database:
+                  type: string
+                  example: "ok"
+                filesystem:
+                  type: string
+                  example: "ok"
+                telegram:
+                  type: string
+                  example: "configured"
+                version:
+                  type: string
+                  example: "2.x.x"
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - ApiKeyAuth: []

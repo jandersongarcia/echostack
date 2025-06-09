@@ -1,0 +1,3 @@
+src/Models/*
+core/Scripts/DeleteModuleCommand.php
+core/Scripts/MakeModuleCommand.php

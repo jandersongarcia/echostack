@@ -145,7 +145,7 @@ O EchoAPI suporta autenticação de chamadas usando API Key.
 Para criar uma chave secreta, use o comando no prompt
 
 ```bash
-composer generate-apikey
+composer generate:apikey
 ```
 
 Inclua o header nas requisições:
@@ -205,7 +205,7 @@ composer log:test
 ### Geração de API Key
 
 ```bash
-composer generate-apikey
+composer generate:apikey
 ```
 
 ---

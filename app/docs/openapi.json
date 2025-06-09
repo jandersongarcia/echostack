@@ -1,0 +1,48 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "EchoAPI",
+        "description": "Documentação da API EchoAPI",
+        "version": "2.0.0"
+    },
+    "servers": [
+        {
+            "url": "https://raw.githubusercontent.com/seu-repo/openapi.json",
+            "description": "Servidor local"
+        }
+    ],
+    "paths": {
+        "/": {
+            "get": {
+                "tags": [
+                    "Sistema"
+                ],
+                "summary": "Health check",
+                "operationId": "d8cdedf534d2d3561536c7ab5159c490",
+                "responses": {
+                    "200": {
+                        "description": "Status da API",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "pong": true,
+                                    "database": "ok",
+                                    "filesystem": "ok",
+                                    "telegram": "configured",
+                                    "version": "2.0.0"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Sistema",
+            "description": "Endpoints de sistema"
+        }
+    ]
+}

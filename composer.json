@@ -32,8 +32,14 @@
         "telegram:test": "php core/Scripts/telegram-test.php",
         "generate:apikey": "php core/Scripts/generate-apikey.php",
         "make:module": "php core/Scripts/make-module.php make:module",
-        "delete:module": "php core/Scripts/delete-module.php delete:module"
+        "delete:module": "php core/Scripts/delete-module.php delete:module",
+        "swagger:build": "vendor/bin/openapi --bootstrap core/OpenApi/bootstrap-swagger.php --output app/docs/openapi.json core/ src/"
+
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "require-dev": {
+        "zircote/swagger-php": "5.1",
+        "doctrine/annotations": "^2.0"
+    }
 }

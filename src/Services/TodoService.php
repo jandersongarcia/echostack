@@ -1,10 +1,10 @@
 <?php
 
-namespace Src\Services;
+namespace App\Services;
 
 use Medoo\Medoo;
 
-class UserService
+class TodoService
 {
     protected $db;
 
@@ -23,26 +23,26 @@ class UserService
 
     public function list()
     {
-        return $this->db->select('users', '*');
+        return $this->db->select('todo', '*');
     }
 
     public function get($id)
     {
-        return $this->db->get('users', '*', ['id' => $id]);
+        return $this->db->get('todo', '*', ['id' => $id]);
     }
 
     public function create(array $data)
     {
-        return $this->db->insert('users', $data)->rowCount();
+        return $this->db->insert('todo', $data)->rowCount();
     }
 
     public function update($id, array $data)
     {
-        return $this->db->update('users', $data, ['id' => $id])->rowCount();
+        return $this->db->update('todo', $data, ['id' => $id])->rowCount();
     }
 
     public function delete($id)
     {
-        return $this->db->delete('users', ['id' => $id])->rowCount();
+        return $this->db->delete('todo', ['id' => $id])->rowCount();
     }
 }

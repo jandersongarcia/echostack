@@ -33,7 +33,8 @@ class Dispatcher
                 if (is_callable($target)) {
                     // Route via Closure
                     $response = call_user_func_array($target, $match['params']);
-                } elseif (is_string($target)) {
+                } elseif (is_string($target) && str_contains($target, '@')) {
+
                     // Route via Controller@method
                     [$controllerClass, $method] = explode('@', $target);
 
@@ -45,7 +46,14 @@ class Dispatcher
                     $controller = new $controllerClass($this->db, $this->logger);
                     $response = call_user_func_array([$controller, $method], $match['params']);
                 } else {
-                    throw new \Exception("Tipo de rota inválido.");
+                    $this->logger->warning('Invalid Rout', [
+                        'request_uri' => $_SERVER['REQUEST_URI'],
+                        'method' => $_SERVER['REQUEST_METHOD']
+                    ]);
+
+                    http_response_code(404);
+                    echo json_encode(['error' => 'Invalid Route']);
+                    return;
                 }
 
                 if ($response instanceof Response) {
@@ -60,7 +68,7 @@ class Dispatcher
                 ]);
 
                 http_response_code(404);
-                echo '404 - Page not found';
+                echo json_encode(['error' => 'Page not found']);
             }
         } catch (\Throwable $e) {
             $this->logger->error('Unexpected execution error', [
@@ -71,7 +79,7 @@ class Dispatcher
             ]);
 
             http_response_code(500);
-            echo 'Internal server error';
+            echo json_encode(['error' => 'Internal server error']);
         }
     }
 }

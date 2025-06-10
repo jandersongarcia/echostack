@@ -1,7 +1,7 @@
 # EchoAPI - Microstack PHP para APIs Enxutas
 
-O EchoAPI é uma estrutura mínimalista (microstack) para quem quer construir APIs REST em PHP com rapidez, organização e baixo acoplamento.
-Ele funciona como uma toolbox para backend — ou seja, oferece apenas o essencial para lidar com rotas, banco, validações, autenticação e logs.
+O EchoAPI é uma estrutura mínimalista (microstack) para quem quer construir APIs REST em PHP com rapidez, organização e baixo acoplamento.  
+Ele funciona como uma toolbox para backend — ou seja, oferece apenas o essencial para lidar com rotas, banco, validações, autenticação e logs.  
 Ideal para quem quer fugir de frameworks complexos e focar em uma API funcional, leve e fácil de manter.
 
 Ele fornece suporte básico para:
@@ -32,7 +32,9 @@ Ele fornece suporte básico para:
 ```txt
 project-root/
 ├── app/                # Frontend (opcional) e documentação
-│   └── docs/           # Arquivo openapi.json (Swagger)
+│   ├── api/            # Pasta de retorno da API v1/
+│   ├── docs/           # Arquivo openapi.json (Swagger)
+│   └── example/        # Aplicação exemplo em React
 ├── bootstrap/          # Inicialização da aplicação
 ├── config/             # Configurações de ambiente e banco
 ├── core/               # Núcleo do EchoAPI
@@ -60,11 +62,10 @@ project-root/
 git clone https://github.com/jandersongarcia/EchoAPI.git
 cd EchoAPI
 
-# Instale as dependências
+# Instale as dependências do backend
 composer install
 
 # Copie o arquivo de ambiente
-touch .env
 cp .env_root .env
 
 # Edite o arquivo .env com as configurações do banco
@@ -84,7 +85,7 @@ O EchoAPI segue um fluxo direto para lidar com requisições:
 2. O arquivo `public/index.php` é o ponto de entrada
 3. Middlewares são carregados (ex: autenticação, CORS, API Key)
 4. A rota é resolvida pelo AltoRouter
-5. O Controller manipula a lógica e retorna resposta JSON
+5. O Controller manipula a lógica e retorna uma resposta JSON
 
 ### Exemplo de rota
 
@@ -163,7 +164,7 @@ composer delete:crud usuarios
 composer list:crud
 ```
 
-> Os scripts verificam existência antes de sobrescrever arquivos e rotas.
+> Os scripts verificam a existência antes de sobrescrever arquivos e rotas.
 
 ---
 
@@ -219,8 +220,78 @@ ERROR_NOTIFY_CATEGORIES=critical,error,alert
 
 ---
 
+## Exemplo de uso com React
+
+Dentro da pasta `app/example`, você encontrará um frontend em **React + Vite** que consome a API EchoAPI para gerenciar tarefas (To Do).
+
+### 1. Configure o banco de dados
+
+Crie o banco de dados e adicione a tabela abaixo:
+
+```sql
+CREATE TABLE todo (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  task VARCHAR(255) NOT NULL,
+  status ENUM('pending', 'done') DEFAULT 'pending',
+  favorite TINYINT(1) DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  completed_at DATETIME DEFAULT NULL
+);
+```
+
+### 2. Ajustes no `.env`
+
+Edite o arquivo `.env` e configure o acesso ao banco:
+
+```ini
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=seu_banco
+DB_USER=seu_usuario
+DB_PASS=sua_senha
+```
+
+### 3. Gerar CRUD e API Key com EchoAPI
+
+```bash
+composer generate:apikey
+composer make:crud todo
+```
+
+Após gerar, a chave estará disponível no arquivo `.env` na raiz do projeto.
+
+### 4. Rode o frontend React
+
+```bash
+cd app/example
+npm install
+npm run dev
+```
+
+Abra [http://localhost:5173](http://localhost:5173) no navegador.
+
+### 5. Configurar URL da API e chave no frontend
+
+Verifique se a URL da API e a chave estão corretas no `.env` do React:
+
+```env
+VITE_API_URL=http://localhost:8080
+VITE_API_KEY=sua_chave_aqui
+```
+
+---
+
+## 🚀 Teste completo
+
+Após seguir os passos acima, você poderá:
+
+1. Acessar a API via: `http://localhost:8080/v1/todo`
+2. Usar a interface To Do em: `http://localhost:5173`
+3. Cadastrar, listar e completar tarefas usando o React conectado à EchoAPI
+
+---
+
 ## Licença
 
-MIT
-
+MIT  
 Desenvolvido por [Janderson Garcia](https://github.com/jandersongarcia)

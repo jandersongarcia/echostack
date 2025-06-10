@@ -59,7 +59,7 @@ if (file_exists($modelPath) || file_exists($servicePath) || file_exists($control
 // Gera Model
 file_put_contents($modelPath, "<?php
 
-namespace Src\Models;
+namespace App\Models;
 
 class {$modelName}
 {
@@ -72,7 +72,7 @@ class {$modelName}
 // Gera Service com lógica básica
 file_put_contents($servicePath, "<?php
 
-namespace Src\Services;
+namespace App\Services;
 
 use Medoo\\Medoo;
 
@@ -123,9 +123,9 @@ class {$serviceName}
 // Gera Controller com estrutura REST básica
 file_put_contents($controllerPath, "<?php
 
-namespace Src\Controllers;
+namespace App\Controllers;
 
-use Src\Services\\{$serviceName};
+use App\Services\\{$serviceName};
 
 class {$controllerName}
 {
@@ -169,11 +169,11 @@ class {$controllerName}
 $rotaPath = dirname(__DIR__, 2) . "/routes/web.php";
 $rotas = "
 // Rotas automáticas para o CRUD de {$table}
-\$router->map('GET', '/v1/{$table}', 'Src\\\\Controllers\\\\{$controllerName}#index');
-\$router->map('GET', '/v1/{$table}/[i:id]', 'Src\\\\Controllers\\\\{$controllerName}#show');
-\$router->map('POST', '/v1/{$table}', 'Src\\\\Controllers\\\\{$controllerName}#store');
-\$router->map('PUT', '/v1/{$table}/[i:id]', 'Src\\\\Controllers\\\\{$controllerName}#update');
-\$router->map('DELETE', '/v1/{$table}/[i:id]', 'Src\\\\Controllers\\\\{$controllerName}#destroy');
+\$router->map('GET', '/{$table}', 'App\\\\Controllers\\\\{$controllerName}@index');
+\$router->map('GET', '/{$table}/[i:id]', 'App\\\\Controllers\\\\{$controllerName}@show');
+\$router->map('POST', '/{$table}', 'App\\\\Controllers\\\\{$controllerName}@store');
+\$router->map('PUT', '/{$table}/[i:id]', 'App\\\\Controllers\\\\{$controllerName}@update');
+\$router->map('DELETE', '/{$table}/[i:id]', 'App\\\\Controllers\\\\{$controllerName}@destroy');
 ";
 
 // Checa se as rotas já existem

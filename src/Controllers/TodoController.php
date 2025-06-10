@@ -1,16 +1,16 @@
 <?php
 
-namespace Src\Controllers;
+namespace App\Controllers;
 
-use Src\Services\UserService;
+use App\Services\TodoService;
 
-class UserController
+class TodoController
 {
     protected $service;
 
     public function __construct()
     {
-        $this->service = new UserService();
+        $this->service = new TodoService();
     }
 
     public function index()

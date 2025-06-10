@@ -15,6 +15,14 @@ class AuthMiddleware
 
     public function handle($request)
     {
+        // Se for ambiente de desenvolvimento e for GET, libera
+        if (
+            ($_ENV['APP_ENV'] ?? '') === 'development' &&
+            ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET'
+        ) {
+            return;
+        }
+
         // Lê o cabeçalho Authorization
         $headers = getallheaders();
         $authHeader = $headers['Authorization'] ?? '';

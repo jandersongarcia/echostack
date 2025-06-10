@@ -14,9 +14,12 @@ $router->map('GET', '/health', function() use ($database, $logger) {
     return $controller->check();
 });
 
-// Rotas automáticas para o CRUD de users
-$router->map('GET', '/v1/users', 'Src\\Controllers\\UserController#index');
-$router->map('GET', '/v1/users/[i:id]', 'Src\\Controllers\\UserController#show');
-$router->map('POST', '/v1/users', 'Src\\Controllers\\UserController#store');
-$router->map('PUT', '/v1/users/[i:id]', 'Src\\Controllers\\UserController#update');
-$router->map('DELETE', '/v1/users/[i:id]', 'Src\\Controllers\\UserController#destroy');
+// Rotas automáticas para o CRUD de todo
+
+
+// Rotas automáticas para o CRUD de todo
+$router->map('GET', '/todo', 'App\\Controllers\\TodoController@index');
+$router->map('GET', '/todo/[i:id]', 'App\\Controllers\\TodoController@show');
+$router->map('POST', '/todo', 'App\\Controllers\\TodoController@store');
+$router->map('PUT', '/todo/[i:id]', 'App\\Controllers\\TodoController@update');
+$router->map('DELETE', '/todo/[i:id]', 'App\\Controllers\\TodoController@destroy');

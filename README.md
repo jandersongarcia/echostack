@@ -1,61 +1,53 @@
-# EchoAPI 2.0
+# EchoAPI - Microstack PHP para APIs Enxutas
 
-EchoAPI é um microstack PHP minimalista, projetado para APIs enxutas, rápidas e altamente manutenáveis.
+O EchoAPI é uma estrutura mínimalista (microstack) para quem quer construir APIs REST em PHP com rapidez, organização e baixo acoplamento.
+Ele funciona como uma toolbox para backend — ou seja, oferece apenas o essencial para lidar com rotas, banco, validações, autenticação e logs.
+Ideal para quem quer fugir de frameworks complexos e focar em uma API funcional, leve e fácil de manter.
 
----
+Ele fornece suporte básico para:
 
-## Visão Geral
-
-* **Backend**: PHP 8.x
-* **Frontend**: Livre (JS, React, Vue, etc)
-* **Comunicação**: API REST (JSON)
-* **Autoload**: PSR-4 via Composer
-* **Banco de Dados**: Medoo (PDO Abstraction)
-* **Roteamento**: AltoRouter
-* **Logs**: Monolog 3.x
-* **Validação**: Respect\Validation
-* **Ambiente**: Dotenv
+* Roteamento com AltoRouter
+* ORM leve com Medoo
+* Validação com Respect\Validation
+* Logs com Monolog
+* Autenticação por API Key
+* Integração opcional com Telegram
 
 ---
 
-## Estrutura do Projeto Atualizada
+## Tecnologias Utilizadas
 
-```
+* PHP 8.x
+* Medoo (PDO wrapper)
+* AltoRouter (roteamento)
+* Monolog (logs)
+* Respect\Validation (validação)
+* Symfony Console (scripts CLI)
+* vlucas/phpdotenv (ambiente)
+
+---
+
+## Estrutura de Diretórios
+
+```txt
 project-root/
-│
-├── app/                # (reservado para código público - frontend, se houver)
-│   ├── api/            # Responsável por conectar ao backend
-│   └── docs/           # Documentação gerada (openapi.json)
-│
-├── bootstrap/          # Inicialização e bootstrap da aplicação
-│
-├── config/             # Configurações de banco, credenciais, etc
-│
-├── core/               # Núcleo do EchoAPI (NAO editável)
-│   ├── Helpers/        # Helpers centrais (ex: PathResolver)
-│   ├── Scripts/        # Scripts de automação (make-module, delete-module)
-│   ├── Services/       # Serviços internos do framework
-│   ├── Utils/          # Versão, System Info, HealthCheck, etc
-│   ├── Dispatcher.php  # Kernel principal
-│   └── MiddlewareLoader.php
-│
-├── logs/               # Logs de aplicação
-│
-├── middleware/         # Middlewares customizados
-│
-├── routes/             # Definição de rotas
-│
-├── src/                # Código da aplicação (personalizado pelo dev)
-│   ├── Controllers/    # Controllers de API
-│   ├── Models/         # Modelos de dados
-│   ├── Services/       # Regras de negócio
-│   ├── Validators/     # Validações customizadas
-│   └── Utils/          # Helpers adicionais
-│
-├── vendor/             # Dependências do Composer
-│
+├── app/                # Frontend (opcional) e documentação
+│   └── docs/           # Arquivo openapi.json (Swagger)
+├── bootstrap/          # Inicialização da aplicação
+├── config/             # Configurações de ambiente e banco
+├── core/               # Núcleo do EchoAPI
+│   ├── Scripts/        # Scripts CLI (make, delete, etc)
+│   └── Dispatcher.php  # Kernel principal
+├── logs/               # Arquivos de log
+├── middleware/         # Middlewares personalizados
+├── routes/             # Arquivo de rotas (web.php)
+├── src/                # Código principal da aplicação
+│   ├── Controllers/    # Controllers REST
+│   ├── Models/         # Modelos baseados no banco
+│   ├── Services/       # Lógica de negócio
+│   └── Validators/     # Validações customizadas
 ├── .env                # Variáveis de ambiente
-├── composer.json       # Configurações e versão
+├── composer.json       # Dependências e scripts
 └── README.md           # Documentação do projeto
 ```
 
@@ -63,245 +55,167 @@ project-root/
 
 ## Instalação
 
-### 1. Clone o repositório
-
 ```bash
+# Clone o repositório
 git clone https://github.com/jandersongarcia/EchoAPI.git
 cd EchoAPI
-```
 
-### 2. Instale as dependências
-
-```bash
+# Instale as dependências
 composer install
-```
 
-### 3. Configure o ambiente
-
-Renomeie o arquivo *.env\_root* para *.env*
-
-```bash
+# Copie o arquivo de ambiente
+touch .env
 cp .env_root .env
-```
 
-Edite o `.env`:
+# Edite o arquivo .env com as configurações do banco
 
-```ini
-API_KEY=suachavesecreta
-DB_DRIVER=mysql
-DB_HOST=localhost
-DB_NAME=echoapi
-DB_USER=root
-DB_PASS=senha
-```
-
-### 4. Permissões
-
-```bash
+# Configure permissões para a pasta de logs (Linux/macOS)
 mkdir logs
 chmod -R 775 logs
 ```
 
 ---
 
-## Fluxo de execução de um endpoint
+## Execução de um Endpoint
 
-1. O cliente faz uma requisição HTTP (ex: `GET /v1/health`)
-2. `public/index.php` é o Front Controller que inicia autoload e Dispatcher.
-3. O `Dispatcher` carrega middlewares (ex: autenticação, CORS, validação de API Key).
-4. O `AltoRouter` resolve a rota com base no arquivo `routes/`.
-5. O Controller correspondente é chamado.
-6. Controller aciona regras de negócio via Services e Models.
-7. A resposta é enviada ao cliente em JSON.
+O EchoAPI segue um fluxo direto para lidar com requisições:
 
----
+1. Cliente envia uma requisição para a API (ex: `GET /v1/health`)
+2. O arquivo `public/index.php` é o ponto de entrada
+3. Middlewares são carregados (ex: autenticação, CORS, API Key)
+4. A rota é resolvida pelo AltoRouter
+5. O Controller manipula a lógica e retorna resposta JSON
 
-## Exemplo simples de rota
-
-Arquivo: `routes/web.php`
+### Exemplo de rota
 
 ```php
 $router->map('GET', '/health', function() {
-    header('Content-Type: application/json');
     echo json_encode(['pong' => true]);
 });
 ```
 
-Teste local:
+### Teste via terminal
 
 ```bash
 curl http://localhost:8080/v1/health
 ```
 
-Resposta:
+### Retorno esperado
 
 ```json
-{"pong":true,"database":"ok","filesystem":"ok","telegram":"configured","version":"2.x.x"}
+{
+  "pong": true,
+  "database": "ok",
+  "filesystem": "ok",
+  "telegram": "configured",
+  "version": "2.0.0"
+}
 ```
 
 ---
 
 ## Autenticação via API Key
 
-O EchoAPI suporta autenticação de chamadas usando API Key.
+Para proteger seus endpoints, o EchoAPI utiliza autenticação por chave de API.
 
-Para criar uma chave secreta, use o comando no prompt
+### Gerar chave de acesso
 
 ```bash
 composer generate:apikey
 ```
 
-Inclua o header nas requisições:
+### Usar nas requisições
 
 ```http
 Authorization: Bearer SUA_API_KEY
 ```
 
-Se a chave estiver ausente ou incorreta, a requisição será bloqueada pelo middleware de autenticação.
+Se a chave estiver incorreta ou ausente, será retornado erro HTTP 401.
 
 ---
 
-## Health Check com Identidade
+## CRUD Automatizado
 
-### Endpoint
+O EchoAPI permite gerar rapidamente um CRUD completo com base em uma tabela do banco de dados.
 
-```http
-GET /v1/
-```
-
-### Resposta exemplo
-
-```
-EchoAPI - version: 2.0.0 | Live long and prosper 🖖
-```
-
-Controlado pelo `Core\Utils\SystemInfo::fullSignature()` e pelo campo `extra` no `composer.json`:
-
-```json
-"extra": {
-  "echoapi-version": "2.0.0"
-}
-```
-
----
-
-## Scripts automatizados
-
-### Geração de Módulos
+### Gerar
 
 ```bash
-composer make:module NomeDaEntidade
+composer make:crud usuarios
 ```
 
-### Remoção de Módulos
+Gera os arquivos:
+
+* `src/Models/Usuario.php`
+* `src/Services/UsuarioService.php`
+* `src/Controllers/UsuarioController.php`
+* Rotas no `routes/web.php`
+
+### Deletar
 
 ```bash
-composer delete:module NomeDaEntidade
+composer delete:crud usuarios
 ```
 
-### Teste de Logs
+### Listar CRUDs + rotas
 
 ```bash
-composer log:test
+composer list:crud
 ```
 
-### Geração de API Key
-
-```bash
-composer generate:apikey
-```
+> Os scripts verificam existência antes de sobrescrever arquivos e rotas.
 
 ---
 
-## Sistema de Logs
+## Geração de Documentação (Swagger)
 
-Local: `/logs/`
+A documentação da API é gerada automaticamente via anotações PHP.
 
-| Arquivo          | Níveis capturados                 |
-| ---------------- | --------------------------------- |
-| **app.log**      | DEBUG, INFO, NOTICE               |
-| **errors.log**   | ERROR, CRITICAL, ALERT, EMERGENCY |
-| **security.log** | WARNING até CRITICAL              |
-
-Sistema baseado em **Monolog 3.x**.
-
----
-
-## Integração com Telegram
-
-### Configuração no `.env`
-
-```ini
-TELEGRAM_BOT_TOKEN=seu_token_aqui
-TELEGRAM_CHAT_ID=seu_chat_id_aqui
-ERROR_NOTIFY_CATEGORIES=critical,error,alert
-```
-
-#### Como obter o BOT\_TOKEN
-
-1. Converse com **@BotFather**
-2. Use o comando `/newbot`
-3. Defina nome e username
-4. Obtenha o token:
-
-```
-123456789:ABCDefghIJKlmNOPqrSTUvwxYZ
-```
-
-#### Como obter o CHAT\_ID
-
-**Para usuário:**
-
-1. Converse com seu bot.
-2. Acesse:
-
-```
-https://api.telegram.org/bot<SEU_BOT_TOKEN>/getUpdates
-```
-
-3. Capture o `chat.id`.
-
-**Para grupos:**
-
-1. Adicione o bot no grupo.
-2. Envie mensagem no grupo.
-3. Consulte novamente `/getUpdates` para capturar o `chat.id` (começa com `-100`).
-
----
-
-## Documentação da API (Swagger)
-
-A documentação da API é gerada automaticamente com base nas anotações do Swagger (OpenAPI) nos arquivos do projeto.
-
-### Como gerar a documentação
+### Gerar
 
 ```bash
 composer swagger:build
 ```
 
-O arquivo será gerado em:
+Cria o arquivo `app/docs/openapi.json`.
 
-```
-app/docs/openapi.json
-```
+### Visualizar
 
-Você pode visualizá-lo usando qualquer visualizador Swagger, como o [Swagger UI](https://editor.swagger.io/), apontando para esse JSON.
+Use ferramentas como:
+
+* [Swagger Editor](https://editor.swagger.io/)
 
 ---
 
-## Tecnologias Base
+## Integração com Telegram (Alerta de erros)
 
-```json
-"require": {
-  "vlucas/phpdotenv": "^5.5",
-  "respect/validation": "^2.2",
-  "symfony/http-foundation": "^6.0",
-  "altorouter/altorouter": "^2.0",
-  "catfan/medoo": "^2.1",
-  "monolog/monolog": "^3.0",
-  "symfony/console": "^7.0"
-}
+O EchoAPI pode enviar mensagens para o Telegram em caso de falhas críticas.
+
+### Configuração no `.env`
+
+```ini
+TELEGRAM_BOT_TOKEN=seu_token
+TELEGRAM_CHAT_ID=seu_chat_id
+ERROR_NOTIFY_CATEGORIES=critical,error,alert
 ```
+
+> Útil para monitoramento rápido em produção.
+
+---
+
+## Scripts Disponíveis
+
+| Comando           | Função                                                     |
+| ----------------- | ---------------------------------------------------------- |
+| `make:module`     | Gera um módulo básico (Controller, Service, Model)         |
+| `delete:module`   | Remove os arquivos do módulo informado                     |
+| `make:crud`       | Cria Model, Service, Controller e rotas com base em tabela |
+| `delete:crud`     | Exclui o CRUD gerado                                       |
+| `list:crud`       | Lista todos os CRUDs + rotas registradas                   |
+| `generate:apikey` | Cria nova API Key                                          |
+| `log:test`        | Gera logs de exemplo                                       |
+| `telegram:test`   | Envia mensagem de teste para o Telegram                    |
+| `swagger:build`   | Gera documentação OpenAPI                                  |
 
 ---
 
@@ -309,6 +223,4 @@ Você pode visualizá-lo usando qualquer visualizador Swagger, como o [Swagger U
 
 MIT
 
----
-
-Desenvolvido por [JandersonGarcia](https://github.com/jandersongarcia)
+Desenvolvido por [Janderson Garcia](https://github.com/jandersongarcia)

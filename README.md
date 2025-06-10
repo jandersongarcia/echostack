@@ -1,93 +1,93 @@
-# EchoAPI - Microstack PHP para APIs Enxutas
+# EchoAPI - Lightweight Microstack for Clean PHP APIs
 
-O EchoAPI é uma estrutura mínimalista (microstack) para quem quer construir APIs REST em PHP com rapidez, organização e baixo acoplamento.  
-Ele funciona como uma toolbox para backend — ou seja, oferece apenas o essencial para lidar com rotas, banco, validações, autenticação e logs.  
-Ideal para quem quer fugir de frameworks complexos e focar em uma API funcional, leve e fácil de manter.
+EchoAPI is a minimalist microstack designed for building REST APIs in PHP with speed, organization, and low coupling.  
+It works as a backend toolbox — offering just the essentials to handle routing, database, validation, authentication, and logging.  
+Perfect for those who want to skip complex frameworks and focus on a lightweight, functional, and easy-to-maintain API.
 
-Ele fornece suporte básico para:
+It provides basic support for:
 
-* Roteamento com AltoRouter
-* ORM leve com Medoo
-* Validação com Respect\Validation
-* Logs com Monolog
-* Autenticação por API Key
-* Integração opcional com Telegram
+* Routing with AltoRouter
+* Lightweight ORM with Medoo
+* Validation with Respect\Validation
+* Logging with Monolog
+* Authentication via API Key
+* Optional integration with Telegram
 
 ---
 
-## Tecnologias Utilizadas
+## Technologies Used
 
 * PHP 8.x
 * Medoo (PDO wrapper)
-* AltoRouter (roteamento)
+* AltoRouter (routing)
 * Monolog (logs)
-* Respect\Validation (validação)
-* Symfony Console (scripts CLI)
-* vlucas/phpdotenv (ambiente)
+* Respect\Validation (validation)
+* Symfony Console (CLI scripts)
+* vlucas/phpdotenv (environment)
 
 ---
 
-## Estrutura de Diretórios
+## Project Structure
 
 ```txt
 project-root/
-├── app/                # Frontend (opcional) e documentação
-│   ├── api/            # Pasta de retorno da API v1/
-│   ├── docs/           # Arquivo openapi.json (Swagger)
-│   └── example/        # Aplicação exemplo em React
-├── bootstrap/          # Inicialização da aplicação
-├── config/             # Configurações de ambiente e banco
-├── core/               # Núcleo do EchoAPI
-│   ├── Scripts/        # Scripts CLI (make, delete, etc)
-│   └── Dispatcher.php  # Kernel principal
-├── logs/               # Arquivos de log
-├── middleware/         # Middlewares personalizados
-├── routes/             # Arquivo de rotas (web.php)
-├── src/                # Código principal da aplicação
-│   ├── Controllers/    # Controllers REST
-│   ├── Models/         # Modelos baseados no banco
-│   ├── Services/       # Lógica de negócio
-│   └── Validators/     # Validações customizadas
-├── .env                # Variáveis de ambiente
-├── composer.json       # Dependências e scripts
-└── README.md           # Documentação do projeto
+├── app/                # Optional frontend and documentation
+│   ├── api/            # API v1 response directory
+│   ├── docs/           # openapi.json file (Swagger)
+│   └── example/        # Sample React application
+├── bootstrap/          # Application bootstrapping
+├── config/             # Environment and database settings
+├── core/               # EchoAPI core
+│   ├── Scripts/        # CLI scripts (make, delete, etc)
+│   └── Dispatcher.php  # Main kernel
+├── logs/               # Log files
+├── middleware/         # Custom middleware
+├── routes/             # Route definitions (web.php)
+├── src/                # Main application code
+│   ├── Controllers/    # REST Controllers
+│   ├── Models/         # Database-based models
+│   ├── Services/       # Business logic
+│   └── Validators/     # Custom validation
+├── .env                # Environment variables
+├── composer.json       # Dependencies and scripts
+└── README.md           # Project documentation
 ```
 
 ---
 
-## Instalação
+## Installation
 
 ```bash
-# Clone o repositório
+# Clone the repository
 git clone https://github.com/jandersongarcia/EchoAPI.git
 cd EchoAPI
 
-# Instale as dependências do backend
+# Install backend dependencies
 composer install
 
-# Copie o arquivo de ambiente
+# Copy environment file
 cp .env_root .env
 
-# Edite o arquivo .env com as configurações do banco
+# Edit .env with your database configuration
 
-# Configure permissões para a pasta de logs (Linux/macOS)
+# Set permissions for the logs folder (Linux/macOS)
 mkdir logs
 chmod -R 775 logs
 ```
 
 ---
 
-## Execução de um Endpoint
+## Executing an Endpoint
 
-O EchoAPI segue um fluxo direto para lidar com requisições:
+EchoAPI handles requests using a clean and straightforward flow:
 
-1. Cliente envia uma requisição para a API (ex: `GET /v1/health`)
-2. O arquivo `public/index.php` é o ponto de entrada
-3. Middlewares são carregados (ex: autenticação, CORS, API Key)
-4. A rota é resolvida pelo AltoRouter
-5. O Controller manipula a lógica e retorna uma resposta JSON
+1. Client sends a request (e.g. `GET /v1/health`)
+2. The `public/index.php` is the entry point
+3. Middlewares are loaded (authentication, CORS, API Key, etc.)
+4. Route is resolved by AltoRouter
+5. Controller handles the logic and returns a JSON response
 
-### Exemplo de rota
+### Sample route
 
 ```php
 $router->map('GET', '/health', function() {
@@ -95,13 +95,13 @@ $router->map('GET', '/health', function() {
 });
 ```
 
-### Teste via terminal
+### Test via terminal
 
 ```bash
 curl http://localhost:8080/v1/health
 ```
 
-### Retorno esperado
+### Expected response
 
 ```json
 {
@@ -115,118 +115,118 @@ curl http://localhost:8080/v1/health
 
 ---
 
-## Autenticação via API Key
+## API Key Authentication
 
-Para proteger seus endpoints, o EchoAPI utiliza autenticação por chave de API.
+EchoAPI secures endpoints using API Key authentication.
 
-### Gerar chave de acesso
+### Generate API Key
 
 ```bash
 composer generate:apikey
 ```
 
-### Usar nas requisições
+### Use in requests
 
 ```http
-Authorization: Bearer SUA_API_KEY
+Authorization: Bearer YOUR_API_KEY
 ```
 
-Se a chave estiver incorreta ou ausente, será retornado erro HTTP 401.
+If the key is missing or incorrect, a 401 HTTP error will be returned.
 
 ---
 
-## CRUD Automatizado
+## Automated CRUD
 
-O EchoAPI permite gerar rapidamente um CRUD completo com base em uma tabela do banco de dados.
+EchoAPI can generate full CRUD structures based on a database table.
 
-### Gerar
-
-```bash
-composer make:crud usuarios
-```
-
-Gera os arquivos:
-
-* `src/Models/Usuario.php`
-* `src/Services/UsuarioService.php`
-* `src/Controllers/UsuarioController.php`
-* Rotas no `routes/web.php`
-
-### Deletar
+### Generate
 
 ```bash
-composer delete:crud usuarios
+composer make:crud users
 ```
 
-### Listar CRUDs + rotas
+This creates:
+
+* `src/Models/User.php`
+* `src/Services/UserService.php`
+* `src/Controllers/UserController.php`
+* Routes inside `routes/web.php`
+
+### Delete
+
+```bash
+composer delete:crud users
+```
+
+### List existing CRUDs + routes
 
 ```bash
 composer list:crud
 ```
 
-> Os scripts verificam a existência antes de sobrescrever arquivos e rotas.
+> The script checks existence before overwriting files or routes.
 
 ---
 
-## Geração de Documentação (Swagger)
+## Swagger Documentation
 
-A documentação da API é gerada automaticamente via anotações PHP.
+API documentation is generated via PHP annotations.
 
-### Gerar
+### Generate
 
 ```bash
 composer swagger:build
 ```
 
-Cria o arquivo `app/docs/openapi.json`.
+Creates `app/docs/openapi.json`.
 
-### Visualizar
+### View
 
-Use ferramentas como:
+Use tools like:
 
 * [Swagger Editor](https://editor.swagger.io/)
 
 ---
 
-## Integração com Telegram (Alerta de erros)
+## Telegram Error Alerts
 
-O EchoAPI pode enviar mensagens para o Telegram em caso de falhas críticas.
+EchoAPI can notify you on Telegram in case of critical failures.
 
-### Configuração no `.env`
+### Configure in `.env`
 
 ```ini
-TELEGRAM_BOT_TOKEN=seu_token
-TELEGRAM_CHAT_ID=seu_chat_id
+TELEGRAM_BOT_TOKEN=your_token
+TELEGRAM_CHAT_ID=your_chat_id
 ERROR_NOTIFY_CATEGORIES=critical,error,alert
 ```
 
-> Útil para monitoramento rápido em produção.
+> Useful for quick monitoring in production.
 
 ---
 
-## Scripts Disponíveis
+## Available Scripts
 
-| Comando           | Função                                                     |
-| ----------------- | ---------------------------------------------------------- |
-| `make:module`     | Gera um módulo básico (Controller, Service, Model)         |
-| `delete:module`   | Remove os arquivos do módulo informado                     |
-| `make:crud`       | Cria Model, Service, Controller e rotas com base em tabela |
-| `delete:crud`     | Exclui o CRUD gerado                                       |
-| `list:crud`       | Lista todos os CRUDs + rotas registradas                   |
-| `generate:apikey` | Cria nova API Key                                          |
-| `log:test`        | Gera logs de exemplo                                       |
-| `telegram:test`   | Envia mensagem de teste para o Telegram                    |
-| `swagger:build`   | Gera documentação OpenAPI                                  |
+| Command            | Description                                                |
+| ------------------ | ---------------------------------------------------------- |
+| `make:module`      | Generates a basic module (Controller, Service, Model)      |
+| `delete:module`    | Deletes the specified module                               |
+| `make:crud`        | Generates a CRUD with Model, Service, Controller, and routes |
+| `delete:crud`      | Deletes the generated CRUD                                 |
+| `list:crud`        | Lists all registered CRUDs and routes                      |
+| `generate:apikey`  | Creates a new API Key                                      |
+| `log:test`         | Creates a sample log                                       |
+| `telegram:test`    | Sends a test message to Telegram                           |
+| `swagger:build`    | Generates OpenAPI documentation                            |
 
 ---
 
-## Exemplo de uso com React
+## Example Usage with React
 
-Dentro da pasta `app/example`, você encontrará um frontend em **React + Vite** que consome a API EchoAPI para gerenciar tarefas (To Do).
+Inside the `app/example` directory, you'll find a **React + Vite** frontend that interacts with the EchoAPI to manage tasks (To Do).
 
-### 1. Configure o banco de dados
+### 1. Set up the database
 
-Crie o banco de dados e adicione a tabela abaixo:
+Create the database and run:
 
 ```sql
 CREATE TABLE todo (
@@ -239,28 +239,28 @@ CREATE TABLE todo (
 );
 ```
 
-### 2. Ajustes no `.env`
+### 2. Configure `.env`
 
-Edite o arquivo `.env` e configure o acesso ao banco:
+Edit your `.env` and set the database credentials:
 
 ```ini
 DB_HOST=localhost
 DB_PORT=3306
-DB_NAME=seu_banco
-DB_USER=seu_usuario
-DB_PASS=sua_senha
+DB_NAME=your_db
+DB_USER=your_user
+DB_PASS=your_password
 ```
 
-### 3. Gerar CRUD e API Key com EchoAPI
+### 3. Generate CRUD and API Key
 
 ```bash
 composer generate:apikey
 composer make:crud todo
 ```
 
-Após gerar, a chave estará disponível no arquivo `.env` na raiz do projeto.
+The API key will be available in the root `.env` file.
 
-### 4. Rode o frontend React
+### 4. Run the React frontend
 
 ```bash
 cd app/example
@@ -268,30 +268,30 @@ npm install
 npm run dev
 ```
 
-Abra [http://localhost:5173](http://localhost:5173) no navegador.
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-### 5. Configurar URL da API e chave no frontend
+### 5. Configure API URL and Key in frontend
 
-Verifique se a URL da API e a chave estão corretas no `.env` do React:
+In the React `.env`:
 
 ```env
 VITE_API_URL=http://localhost:8080
-VITE_API_KEY=sua_chave_aqui
+VITE_API_KEY=your_api_key_here
 ```
 
 ---
 
-## 🚀 Teste completo
+## 🚀 Full Test
 
-Após seguir os passos acima, você poderá:
+After completing the steps above:
 
-1. Acessar a API via: `http://localhost:8080/v1/todo`
-2. Usar a interface To Do em: `http://localhost:5173`
-3. Cadastrar, listar e completar tarefas usando o React conectado à EchoAPI
+1. Access the API at: `http://localhost:8080/v1/todo`
+2. Use the To Do interface at: `http://localhost:5173`
+3. Add, list, and mark tasks using the React app connected to EchoAPI
 
 ---
 
-## Licença
+## License
 
 MIT  
-Desenvolvido por [Janderson Garcia](https://github.com/jandersongarcia)
+Developed by [Janderson Garcia](https://github.com/jandersongarcia)

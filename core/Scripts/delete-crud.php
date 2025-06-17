@@ -1,10 +1,10 @@
 <?php
 
-require_once ('helper-script.php');
+require_once 'helper-script.php';
 
 $table = $argv[1] ?? null;
 if (!$table) {
-    out('WARNING', "Informe o nome da tabela: composer delete:crud nome_da_tabela", 'yellow');
+    out('WARNING', "Please provide the table name: composer delete:crud table_name", 'yellow');
     exit;
 }
 
@@ -13,35 +13,59 @@ $controllerName = "{$className}Controller";
 $serviceName = "{$className}Service";
 $modelName = $className;
 
-// Caminhos dos arquivos
+// File paths
 $basePath = dirname(__DIR__, 2) . '/src';
 $modelPath = "{$basePath}/Models/{$modelName}.php";
 $servicePath = "{$basePath}/Services/{$serviceName}.php";
 $controllerPath = "{$basePath}/Controllers/{$controllerName}.php";
 
-// Apaga arquivos se existirem
+// Delete PHP files if they exist
 foreach ([$modelPath, $servicePath, $controllerPath] as $file) {
     if (file_exists($file)) {
         unlink($file);
-        out('SUCCESS', "Removido: {$file}", 'green');
+        out('SUCCESS', "Deleted: {$file}", 'green');
     } else {
-        out('WARNING', "Não encontrado (ignorando): {$file}", 'yellow');
+        out('WARNING', "Not found (skipped): {$file}", 'yellow');
     }
 }
 
-// Remove rotas do arquivo
+// === Remove related routes and auto-generated comments from routes/web.php, cleaning blank lines ===
 $routeFile = dirname(__DIR__, 2) . '/routes/web.php';
 if (file_exists($routeFile)) {
     $lines = file($routeFile);
-    $filtered = array_filter($lines, function ($line) use ($table, $controllerName) {
-        return !str_contains($line, "/v1/{$table}") && !str_contains($line, $controllerName);
-    });
+    $newContent = '';
+    $previousLineWasBlank = false;
 
-    file_put_contents($routeFile, implode('', $filtered));
-    out('SUCCESS', "Rotas para '{$table}' removidas de routes/web.php", 'green');
+    foreach ($lines as $line) {
+        $trimmedLine = trim($line);
+
+        // Skip routes or comments related to the table or controller
+        if (
+            str_contains($trimmedLine, "/v1/{$table}") ||
+            str_contains($trimmedLine, $controllerName) ||
+            str_contains($trimmedLine, "// Auto-generated CRUD routes for {$table}")
+        ) {
+            continue;
+        }
+
+        // Clean multiple consecutive blank lines
+        if ($trimmedLine === '') {
+            if (!$previousLineWasBlank) {
+                $newContent .= PHP_EOL;
+                $previousLineWasBlank = true;
+            }
+        } else {
+            $newContent .= $line;
+            $previousLineWasBlank = false;
+        }
+    }
+
+    file_put_contents($routeFile, trim($newContent) . PHP_EOL);
+    out('SUCCESS', "Routes and comments for '{$table}' removed and blank lines cleaned from routes/web.php", 'green');
 } else {
-    out('ERROR', "Arquivo de rotas não encontrado.", 'green');
+    out('ERROR', "routes/web.php not found.", 'red');
 }
 
-out('SUCCESS', "CRUD removido com sucesso para a tabela '{$table}", 'green');
+out('SUCCESS', "CRUD successfully deleted for table '{$table}'.", 'green');
+out('INFO', 'Running swagger:build...');
 echo shell_exec("composer swagger:build");

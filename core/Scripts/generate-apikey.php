@@ -17,8 +17,8 @@ if (!file_exists($envPath)) {
         exit("❌ Permission denied: cannot write .env file in project root.\n");
     }
 
-    file_put_contents($envPath, "API_KEY={$newKey}\n");
-    echo "✅ .env file created and API_KEY set.\n";
+    file_put_contents($envPath, "SECRET_KEY={$newKey}\n");
+    echo "✅ .env file created and SECRET_KEY set.\n";
 } else {
     if (!is_writable($envPath)) {
         exit("❌ Permission denied: cannot modify existing .env file.\n");
@@ -28,18 +28,18 @@ if (!file_exists($envPath)) {
     $keyUpdated = false;
 
     foreach ($envContent as &$line) {
-        if (strpos($line, 'API_KEY=') === 0) {
-            $line = "API_KEY={$newKey}";
+        if (strpos($line, 'SECRET_KEY=') === 0) {
+            $line = "SECRET_KEY={$newKey}";
             $keyUpdated = true;
         }
     }
 
     if (!$keyUpdated) {
-        $envContent[] = "API_KEY={$newKey}";
+        $envContent[] = "SECRET_KEY={$newKey}";
     }
 
     file_put_contents($envPath, implode(PHP_EOL, $envContent) . PHP_EOL);
-    echo "✅ API_KEY successfully updated.\n";
+    echo "✅ SECRET_KEY successfully updated.\n";
 }
 
-echo "🔑 New API_KEY: {$newKey}\n";
+echo "🔑 New SECRET_KEY: {$newKey}\n";

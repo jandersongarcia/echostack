@@ -1,16 +1,16 @@
 <?php
 
 require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
-require_once('helper-script.php');
+require_once 'helper-script.php';
 
 use Dotenv\Dotenv;
 use Medoo\Medoo;
 
-// Carrega variáveis do .env
+// Load .env variables
 $dotenv = Dotenv::createImmutable(dirname(__DIR__, 2));
 $dotenv->load();
 
-// Conexão com o banco via Medoo
+// Database connection via Medoo
 $database = new Medoo([
     'type' => 'mysql',
     'host' => $_ENV['DB_HOST'],
@@ -23,13 +23,13 @@ $database = new Medoo([
 
 $table = $argv[1] ?? null;
 if (!$table) {
-    out('WARNING', "Informe o nome da tabela: composer make:crud nome_da_tabela", 'yellow');
+    out('WARNING', "Please provide the table name: composer make:crud table_name", 'yellow');
     exit;
 }
 
 $columns = $database->query("DESCRIBE `$table`")->fetchAll(PDO::FETCH_ASSOC);
 if (!$columns) {
-    out('ERROR', "Tabela '$table' não encontrada.", 'red');
+    out('ERROR', "Table '$table' not found in the database.", 'red');
     exit;
 }
 
@@ -41,7 +41,7 @@ function swaggerType(string $sqlType): string {
     return 'string';
 }
 
-// Prepara nomes das classes
+// Prepare class names
 $className = ucfirst(rtrim($table, 's'));
 $controllerName = "{$className}Controller";
 $serviceName = "{$className}Service";
@@ -57,10 +57,11 @@ $servicePath = "{$basePath}/Services/{$serviceName}.php";
 $controllerPath = "{$basePath}/Controllers/{$controllerName}.php";
 
 if (file_exists($modelPath) || file_exists($servicePath) || file_exists($controllerPath)) {
-    out('ERROR', "O CRUD para '{$table}' já existe. Use 'composer delete:crud {$table}' antes de gerar novamente.", 'red');
+    out('ERROR', "CRUD for '{$table}' already exists. Run 'composer delete:crud {$table}' before generating again.", 'red');
     exit;
 }
 
+// Generate Model
 file_put_contents($modelPath, "<?php
 
 namespace App\Models;
@@ -69,10 +70,11 @@ class {$modelName}
 {
 " . implode("\n", array_map(fn($col) => "    public \${$col['Field']};", $columns)) . "
 
-    // Personalize métodos e lógica de transformação conforme necessário.
+    // Customize model methods as needed.
 }
 ");
 
+// Generate Swagger Schema
 $schemaProps = [];
 foreach ($columns as $col) {
     if (in_array(strtolower($col['Field']), ['senha', 'password', 'token'])) continue;
@@ -81,6 +83,7 @@ foreach ($columns as $col) {
 }
 $swaggerSchema = "/**\n * @OA\Schema(\n *     schema=\"{$className}\",\n *     type=\"object\",\n" . implode("\n", $schemaProps) . "\n * )\n */";
 
+// Generate Service
 file_put_contents($servicePath, "<?php
 
 namespace App\Services;
@@ -132,35 +135,36 @@ class {$serviceName}
 }
 ");
 
+// Generate Controller
 file_put_contents($controllerPath, "<?php
 
 namespace App\Controllers;
 
-use App\Services\{$serviceName};
+use App\Services\\{$serviceName};
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * @OA\Tag(name=\"$className\")
+ * @OA\Tag(name=\"{$className}\")
  */
-class $controllerName
+class {$controllerName}
 {
     protected \$service;
 
     public function __construct()
     {
-        \$this->service = new $serviceName();
+        \$this->service = new {$serviceName}();
     }
 
     /**
      * @OA\Get(
-     *     path=".'"/'.$table.'"'.",
-     *     tags=".'{"'.$className.'"}'.",
-     *     summary=".'"List all records"'.",
+     *     path=\"/{$table}\",
+     *     tags={\"{$className}\"},
+     *     summary=\"List all records\",
      *     @OA\Response(
      *         response=200,
-     *         description=".'"Successful response"'.",
-     *         @OA\JsonContent(type=".'"array"'.", @OA\Items(ref=".'"#/components/schemas/'.$className.'"'."))
+     *         description=\"Successful response\",
+     *         @OA\JsonContent(type=\"array\", @OA\Items(ref=\"#/components/schemas/{$className}\"))
      *     )
      * )
      */
@@ -171,12 +175,12 @@ class $controllerName
 
     /**
      * @OA\Get(
-     *     path=".'"/'.$table.'/id"'.",
-     *     tags=".'{"'.$className.'"}'.",
-     *     summary=".'"Get a single record"'.",
-     *     @OA\Parameter(name=".'"id"'.", in=".'"path"'.", required=true, @OA\Schema(type=".'"integer"'.")),
-     *     @OA\Response(response=200, description=".'"Success"'.", @OA\JsonContent(ref=".'"#/components/schemas/'.$className.'"'.")),
-     *     @OA\Response(response=404, description=".'"Not found"'.")
+     *     path=\"/{$table}/id\",
+     *     tags={\"{$className}\"},
+     *     summary=\"Get a single record\",
+     *     @OA\Parameter(name=\"id\", in=\"path\", required=true, @OA\Schema(type=\"integer\")),
+     *     @OA\Response(response=200, description=\"Success\", @OA\JsonContent(ref=\"#/components/schemas/{$className}\")),
+     *     @OA\Response(response=404, description=\"Not found\")
      * )
      */
     public function show(\$id)
@@ -186,11 +190,11 @@ class $controllerName
 
     /**
      * @OA\Post(
-     *     path=".'"/'.$table.'"'.",
-     *     tags=".'{"'.$className.'"}'.",
-     *     summary=".'"Create a new record"'.",
-     *     @OA\RequestBody(@OA\JsonContent(ref=".'"#/components/schemas/'.$className.'"'.")),
-     *     @OA\Response(response=201, description=".'"Created"'.")
+     *     path=\"/{$table}\",
+     *     tags={\"{$className}\"},
+     *     summary=\"Create a new record\",
+     *     @OA\RequestBody(@OA\JsonContent(ref=\"#/components/schemas/{$className}\")),
+     *     @OA\Response(response=201, description=\"Created\")
      * )
      */
     public function store()
@@ -201,12 +205,12 @@ class $controllerName
 
     /**
      * @OA\Put(
-     *     path=".'"/'.$table.'/id"'.",
-     *     tags=".'{"'.$className.'"}'.",
-     *     summary=".'"Update a record"'.",
-     *     @OA\Parameter(name=".'"id"'.", in=".'"path"'.", required=true, @OA\Schema(type=".'"integer"'.")),
-     *     @OA\RequestBody(@OA\JsonContent(ref=".'"#/components/schemas/'.$className.'"'.")),
-     *     @OA\Response(response=200, description=".'"Updated"'.")
+     *     path=\"/{$table}/id\",
+     *     tags={\"{$className}\"},
+     *     summary=\"Update a record\",
+     *     @OA\Parameter(name=\"id\", in=\"path\", required=true, @OA\Schema(type=\"integer\")),
+     *     @OA\RequestBody(@OA\JsonContent(ref=\"#/components/schemas/{$className}\")),
+     *     @OA\Response(response=200, description=\"Updated\")
      * )
      */
     public function update(\$id)
@@ -217,11 +221,11 @@ class $controllerName
 
     /**
      * @OA\Delete(
-     *     path=".'"/'.$table.'/id"'.",
-     *     tags=".'{"'.$className.'"}'.",
-     *     summary=".'"Delete a record"'.",
-     *     @OA\Parameter(name=".'"id"'.", in=".'"path"'.", required=true, @OA\Schema(type=".'"integer"'.")),
-     *     @OA\Response(response=200, description=".'"Deleted"'.")
+     *     path=\"/{$table}/id\",
+     *     tags={\"{$className}\"},
+     *     summary=\"Delete a record\",
+     *     @OA\Parameter(name=\"id\", in=\"path\", required=true, @OA\Schema(type=\"integer\")),
+     *     @OA\Response(response=200, description=\"Deleted\")
      * )
      */
     public function destroy(\$id)
@@ -231,10 +235,10 @@ class $controllerName
 }
 ");
 
-// Adiciona rotas ao arquivo routes/web.php
-$rotaPath = dirname(__DIR__, 2) . "/routes/web.php";
-$rotas = "
-// Rotas automáticas para o CRUD de {$table}
+// Add routes to routes/web.php
+$routePath = dirname(__DIR__, 2) . "/routes/web.php";
+$routes = "
+// Auto-generated CRUD routes for {$table}
 \$router->map('GET', '/{$table}', 'App\\Controllers\\{$controllerName}@index');
 \$router->map('GET', '/{$table}/[i:id]', 'App\\Controllers\\{$controllerName}@show');
 \$router->map('POST', '/{$table}', 'App\\Controllers\\{$controllerName}@store');
@@ -242,12 +246,14 @@ $rotas = "
 \$router->map('DELETE', '/{$table}/[i:id]', 'App\\Controllers\\{$controllerName}@destroy');
 ";
 
-if (!file_exists($rotaPath) || strpos(file_get_contents($rotaPath), "/{$table}") === false) {
-    file_put_contents($rotaPath, PHP_EOL . $rotas, FILE_APPEND);
-    out('SUCCESS', "Rotas adicionadas ao arquivo web.php", 'green');
+if (!file_exists($routePath) || strpos(file_get_contents($routePath), "/{$table}") === false) {
+    file_put_contents($routePath, PHP_EOL . $routes, FILE_APPEND);
+    out('SUCCESS', "Routes added to web.php", 'green');
 } else {
-    out('WARNING', "Rotas para '{$table}' já existem no arquivo web.php. Nada foi adicionado.", 'yellow');
+    out('WARNING', "Routes for '{$table}' already exist in web.php. Skipped.", 'yellow');
 }
 
-out('SUCCESS', "CRUD gerado com sucesso para a tabela '{$table}'!", 'green');
+out('INFO', 'Running swagger:build');
 echo shell_exec("composer swagger:build");
+
+out('SUCCESS', "CRUD generated successfully for table '{$table}'!", 'green');

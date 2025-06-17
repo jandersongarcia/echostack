@@ -29,4 +29,4 @@ TELEGRAM_CHAT_ID=
 ERROR_NOTIFY_CATEGORIES=critical,error,alert
 
 # API Key (generated via generate-apikey script)
-API_KEY=
+SECRET_KEY=

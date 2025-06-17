@@ -1,7 +1,7 @@
 # EchoAPI - Microstack PHP para APIs Enxutas
 
-O EchoAPI é uma estrutura mínimalista (microstack) para quem quer construir APIs REST em PHP com rapidez, organização e baixo acoplamento.  
-Ele funciona como uma toolbox para backend — ou seja, oferece apenas o essencial para lidar com rotas, banco, validações, autenticação e logs.  
+O EchoAPI é uma estrutura minimalista (microstack) para quem quer construir APIs REST em PHP com rapidez, organização e baixo acoplamento.
+Ele funciona como uma toolbox para backend — oferecendo apenas o essencial para rotas, banco, validações, autenticação e logs.
 Ideal para quem quer fugir de frameworks complexos e focar em uma API funcional, leve e fácil de manter.
 
 Ele fornece suporte básico para:
@@ -11,6 +11,7 @@ Ele fornece suporte básico para:
 * Validação com Respect\Validation
 * Logs com Monolog
 * Autenticação por API Key
+* Autenticação JWT (Opcional)
 * Integração opcional com Telegram
 
 ---
@@ -24,6 +25,7 @@ Ele fornece suporte básico para:
 * Respect\Validation (validação)
 * Symfony Console (scripts CLI)
 * vlucas/phpdotenv (ambiente)
+* Firebase PHP-JWT (Autenticação JWT)
 
 ---
 
@@ -32,22 +34,30 @@ Ele fornece suporte básico para:
 ```txt
 project-root/
 ├── app/                # Frontend (opcional) e documentação
-│   ├── api/            # Pasta de retorno da API v1/
-│   ├── docs/           # Arquivo openapi.json (Swagger)
-│   └── example/        # Aplicação exemplo em React
+│   ├── api/            # Arquivo de acesso ao backend
+│   └── docs/           # Arquivo gerado da documentação OpenAPI
 ├── bootstrap/          # Inicialização da aplicação
 ├── config/             # Configurações de ambiente e banco
 ├── core/               # Núcleo do EchoAPI
+│   ├── Helpers/        # Funções auxiliares genéricas
+│   ├── Migration/      # Scripts de instalação, rollback ou atualização de banco
+│   ├── OpenApi/        # Configurações e bootstrap da geração Swagger/OpenAPI
 │   ├── Scripts/        # Scripts CLI (make, delete, etc)
+│   ├── Services/       # Serviços internos
+│   ├── Utils/          # Classes utilitárias internas ao Core
 │   └── Dispatcher.php  # Kernel principal
 ├── logs/               # Arquivos de log
 ├── middleware/         # Middlewares personalizados
 ├── routes/             # Arquivo de rotas (web.php)
 ├── src/                # Código principal da aplicação
 │   ├── Controllers/    # Controllers REST
+│   ├── Docs/           # Anotações Swagger para endpoints
 │   ├── Models/         # Modelos baseados no banco
 │   ├── Services/       # Lógica de negócio
-│   └── Validators/     # Validações customizadas
+│   ├── Utils/          # Helpers específicos do projeto
+│   ├── Validators/     # Validações customizadas
+│   └── Views/          # Templates de saída
+│     └── emails/       # Templates de email (ex: recuperação de senha, boas-vindas)
 ├── .env                # Variáveis de ambiente
 ├── composer.json       # Dependências e scripts
 └── README.md           # Documentação do projeto
@@ -62,7 +72,7 @@ project-root/
 git clone https://github.com/jandersongarcia/EchoAPI.git
 cd EchoAPI
 
-# Instale as dependências do backend
+# Instale as dependências
 composer install
 
 # Copie o arquivo de ambiente
@@ -79,78 +89,43 @@ chmod -R 775 logs
 
 ## Execução de um Endpoint
 
-O EchoAPI segue um fluxo direto para lidar com requisições:
+Fluxo padrão de requisição:
 
-1. Cliente envia uma requisição para a API (ex: `GET /v1/health`)
-2. O arquivo `public/index.php` é o ponto de entrada
-3. Middlewares são carregados (ex: autenticação, CORS, API Key)
-4. A rota é resolvida pelo AltoRouter
-5. O Controller manipula a lógica e retorna uma resposta JSON
+1. Cliente envia uma requisição (ex: `GET /v1/health`)
+2. O `public/index.php` é o ponto de entrada
+3. Middlewares (Auth, API Key, etc) são carregados
+4. A rota é resolvida
+5. O Controller responde com JSON
 
-### Exemplo de rota
-
-```php
-$router->map('GET', '/health', function() {
-    echo json_encode(['pong' => true]);
-});
-```
-
-### Teste via terminal
+### Teste via terminal:
 
 ```bash
 curl http://localhost:8080/v1/health
-```
-
-### Retorno esperado
-
-```json
-{
-  "pong": true,
-  "database": "ok",
-  "filesystem": "ok",
-  "telegram": "configured",
-  "version": "2.0.0"
-}
 ```
 
 ---
 
 ## Autenticação via API Key
 
-Para proteger seus endpoints, o EchoAPI utiliza autenticação por chave de API.
-
-### Gerar chave de acesso
-
 ```bash
 composer generate:apikey
 ```
 
-### Usar nas requisições
+Use nas requisições:
 
 ```http
 Authorization: Bearer SUA_API_KEY
 ```
 
-Se a chave estiver incorreta ou ausente, será retornado erro HTTP 401.
-
 ---
 
 ## CRUD Automatizado
 
-O EchoAPI permite gerar rapidamente um CRUD completo com base em uma tabela do banco de dados.
-
-### Gerar
+### Criar
 
 ```bash
 composer make:crud usuarios
 ```
-
-Gera os arquivos:
-
-* `src/Models/Usuario.php`
-* `src/Services/UsuarioService.php`
-* `src/Controllers/UsuarioController.php`
-* Rotas no `routes/web.php`
 
 ### Deletar
 
@@ -158,49 +133,85 @@ Gera os arquivos:
 composer delete:crud usuarios
 ```
 
-### Listar CRUDs + rotas
+### Listar
 
 ```bash
 composer list:crud
 ```
 
-> Os scripts verificam a existência antes de sobrescrever arquivos e rotas.
+---
+
+## Autenticação JWT (Opcional)
+
+### Gerar o sistema de autenticação
+
+```bash
+composer make:auth
+```
+
+Cria Controllers, Services, Middlewares e rotas.
+
+---
+
+### Criar as tabelas no banco (migrations)
+
+```bash
+composer migration:auth
+```
+
+Cria as tabelas:
+
+* `users`
+* `tokens`
+* `password_resets`
+
+---
+
+### Deletar o sistema de autenticação
+
+```bash
+composer delete:auth
+```
+
+---
+
+### Endpoints Padrão do Auth JWT
+
+| Método | Endpoint          | Função                  |
+| ------ | ----------------- | ----------------------- |
+| POST   | /v1/auth/login    | Login com email/senha   |
+| POST   | /v1/auth/register | Registro de usuário     |
+| POST   | /v1/auth/recover  | Solicitar reset senha   |
+| POST   | /v1/auth/reset    | Resetar senha via token |
+| POST   | /v1/auth/logout   | Logout do usuário       |
+
+Após login, o sistema retorna um JWT:
+
+```http
+Authorization: Bearer SEU_JWT_AQUI
+```
 
 ---
 
 ## Geração de Documentação (Swagger)
 
-A documentação da API é gerada automaticamente via anotações PHP.
-
-### Gerar
-
 ```bash
 composer swagger:build
 ```
 
-Cria o arquivo `app/docs/openapi.json`.
-
-### Visualizar
-
-Use ferramentas como:
-
-* [Swagger Editor](https://editor.swagger.io/)
+Gera `app/docs/openapi.json`
 
 ---
 
-## Integração com Telegram (Alerta de erros)
+## Integração com Telegram
 
-O EchoAPI pode enviar mensagens para o Telegram em caso de falhas críticas.
-
-### Configuração no `.env`
+Configuração `.env`:
 
 ```ini
 TELEGRAM_BOT_TOKEN=seu_token
 TELEGRAM_CHAT_ID=seu_chat_id
 ERROR_NOTIFY_CATEGORIES=critical,error,alert
 ```
-
-> Útil para monitoramento rápido em produção.
 
 ---
 
@@ -213,85 +224,17 @@ ERROR_NOTIFY_CATEGORIES=critical,error,alert
 | `make:crud`       | Cria Model, Service, Controller e rotas com base em tabela |
 | `delete:crud`     | Exclui o CRUD gerado                                       |
 | `list:crud`       | Lista todos os CRUDs + rotas registradas                   |
+| `make:auth`       | Gera o sistema de autenticação JWT                         |
+| `migration:auth`  | Executa as migrations SQL do Auth                          |
+| `delete:auth`     | Remove o sistema de autenticação JWT                       |
 | `generate:apikey` | Cria nova API Key                                          |
 | `log:test`        | Gera logs de exemplo                                       |
-| `telegram:test`   | Envia mensagem de teste para o Telegram                    |
+| `telegram:test`   | Testa envio de mensagens via Telegram                      |
 | `swagger:build`   | Gera documentação OpenAPI                                  |
-
----
-
-## Exemplo de uso com React
-
-Dentro da pasta `app/example`, você encontrará um frontend em **React + Vite** que consome a API EchoAPI para gerenciar tarefas (To Do).
-
-### 1. Configure o banco de dados
-
-Crie o banco de dados e adicione a tabela abaixo:
-
-```sql
-CREATE TABLE todo (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  task VARCHAR(255) NOT NULL,
-  status ENUM('pending', 'done') DEFAULT 'pending',
-  favorite TINYINT(1) DEFAULT 0,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  completed_at DATETIME DEFAULT NULL
-);
-```
-
-### 2. Ajustes no `.env`
-
-Edite o arquivo `.env` e configure o acesso ao banco:
-
-```ini
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=seu_banco
-DB_USER=seu_usuario
-DB_PASS=sua_senha
-```
-
-### 3. Gerar CRUD e API Key com EchoAPI
-
-```bash
-composer generate:apikey
-composer make:crud todo
-```
-
-Após gerar, a chave estará disponível no arquivo `.env` na raiz do projeto.
-
-### 4. Rode o frontend React
-
-```bash
-cd app/example
-npm install
-npm run dev
-```
-
-Abra [http://localhost:5173](http://localhost:5173) no navegador.
-
-### 5. Configurar URL da API e chave no frontend
-
-Verifique se a URL da API e a chave estão corretas no `.env` do React:
-
-```env
-VITE_API_URL=http://localhost:8080
-VITE_API_KEY=sua_chave_aqui
-```
-
----
-
-## 🚀 Teste completo
-
-Após seguir os passos acima, você poderá:
-
-1. Acessar a API via: `http://localhost:8080/v1/todo`
-2. Usar a interface To Do em: `http://localhost:5173`
-3. Cadastrar, listar e completar tarefas usando o React conectado à EchoAPI
 
 ---
 
 ## Licença
 
-MIT  
+MIT
 Desenvolvido por [Janderson Garcia](https://github.com/jandersongarcia)

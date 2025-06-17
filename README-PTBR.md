@@ -105,39 +105,83 @@ curl http://localhost:8080/v1/health
 
 ---
 
+Aqui está um texto introdutório simples, objetivo e com a informação sobre o preenchimento automático do `.env`:
+
+---
+
 ## Autenticação via API Key
+
+O EchoAPI oferece um sistema simples de autenticação via **API Key**, ideal para proteger endpoints sem a complexidade de JWT ou OAuth.
+
+### Gerar uma nova chave de API
 
 ```bash
 composer generate:apikey
 ```
 
-Use nas requisições:
+> **Observação:**
+> Ao executar esse comando, o EchoAPI irá gerar uma nova chave aleatória e preencher automaticamente o campo `SECRET_KEY` no arquivo:
+
+```txt
+.env  (na raiz do projeto)
+```
+
+### Como usar a API Key nas requisições
+
+Adicione o cabeçalho **Authorization** em todas as requisições protegidas:
 
 ```http
 Authorization: Bearer SUA_API_KEY
 ```
 
+Se a chave estiver incorreta ou ausente, a API retornará um erro HTTP 401 (Unauthorized).
+
+---
+
+Aqui está um texto objetivo, com aviso sobre o banco de dados e a necessidade da tabela já existir:
+
 ---
 
 ## CRUD Automatizado
 
-### Criar
+O EchoAPI permite gerar rapidamente um CRUD completo baseado em uma tabela existente no banco de dados.
+Esse recurso economiza tempo criando automaticamente o **Model**, **Service**, **Controller** e o trecho de rota correspondente.
+
+> **Importante:**
+> Para que o comando funcione corretamente, o banco de dados precisa estar acessível e a tabela deve existir previamente.
+
+### Criar um CRUD
 
 ```bash
-composer make:crud usuarios
+composer make:crud users
 ```
 
-### Deletar
+Este comando vai gerar:
+
+* `src/Models/Users.php`
+* `src/Services/UsersService.php`
+* `src/Controllers/UsersController.php`
+* Entradas no arquivo de rotas `routes/web.php`
+
+---
+
+### Deletar um CRUD
 
 ```bash
-composer delete:crud usuarios
+composer delete:crud users
 ```
 
-### Listar
+Remove todos os arquivos relacionados ao CRUD especificado (Model, Service, Controller e rota).
+
+---
+
+### Listar CRUDs existentes
 
 ```bash
 composer list:crud
 ```
+
+Exibe uma lista de todos os CRUDs já gerados e suas respectivas rotas.
 
 ---
 
@@ -193,13 +237,48 @@ Authorization: Bearer SEU_JWT_AQUI
 
 ---
 
+Aqui vai um complemento claro e direto para esse trecho do README:
+
+---
+
 ## Geração de Documentação (Swagger)
 
 ```bash
 composer swagger:build
 ```
 
-Gera `app/docs/openapi.json`
+Este comando irá gerar o arquivo:
+
+```txt
+app/docs/openapi.json
+```
+
+> **Importante:**
+> Para visualizar a documentação via navegador, é necessário configurar a URL da API no arquivo:
+
+```txt
+app/docs/swagger-initializer.js
+```
+
+Edite a linha que define a URL do Swagger para apontar corretamente para o seu `openapi.json`, exemplo:
+
+```javascript
+window.ui = SwaggerUIBundle({
+  url: "http://filedow.net/docs/openapi.json",  // 🔴 Altere essa linha para o seu ambiente
+  dom_id: '#swagger-ui',
+  deepLinking: true,
+  presets: [
+    SwaggerUIBundle.presets.apis,
+    SwaggerUIStandalonePreset
+  ],
+  plugins: [
+    SwaggerUIBundle.plugins.DownloadUrl
+  ],
+  layout: "StandaloneLayout"
+});
+```
+
+Depois, basta abrir o Swagger UI no navegador (por exemplo: `http://localhost:8080/app/docs/`).
 
 ---
 

@@ -28,6 +28,12 @@ class Dispatcher
             $match = $this->router->match();
 
             if ($match) {
+
+                $middlewares = $this->middlewareLoader->load();
+                foreach ($middlewares as $middleware) {
+                    $middleware->handle($_SERVER['REQUEST_URI']);
+                }
+
                 $target = $match['target'];
 
                 if (is_callable($target)) {

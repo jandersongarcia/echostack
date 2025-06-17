@@ -1,8 +1,10 @@
 <?php
 
+require_once ('helper-script.php');
+
 $table = $argv[1] ?? null;
 if (!$table) {
-    echo "Informe o nome da tabela: composer delete:crud nome_da_tabela\n";
+    out('WARNING', "Informe o nome da tabela: composer delete:crud nome_da_tabela", 'yellow');
     exit;
 }
 
@@ -21,9 +23,9 @@ $controllerPath = "{$basePath}/Controllers/{$controllerName}.php";
 foreach ([$modelPath, $servicePath, $controllerPath] as $file) {
     if (file_exists($file)) {
         unlink($file);
-        echo "Removido: {$file}\n";
+        out('SUCCESS', "Removido: {$file}", 'green');
     } else {
-        echo "Não encontrado (ignorando): {$file}\n";
+        out('WARNING', "Não encontrado (ignorando): {$file}", 'yellow');
     }
 }
 
@@ -36,9 +38,10 @@ if (file_exists($routeFile)) {
     });
 
     file_put_contents($routeFile, implode('', $filtered));
-    echo "Rotas para '{$table}' removidas de routes/web.php\n";
+    out('SUCCESS', "Rotas para '{$table}' removidas de routes/web.php", 'green');
 } else {
-    echo "Arquivo de rotas não encontrado.\n";
+    out('ERROR', "Arquivo de rotas não encontrado.", 'green');
 }
 
-echo "CRUD removido com sucesso para a tabela '{$table}'!\n";
+out('SUCCESS', "CRUD removido com sucesso para a tabela '{$table}", 'green');
+echo shell_exec("composer swagger:build");

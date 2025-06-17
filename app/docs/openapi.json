@@ -1,16 +1,10 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "EchoAPI",
-        "description": "Documentação da API EchoAPI",
+        "title": "EchoAPI - REST API",
+        "description": "Minimal backend toolbox for APIs",
         "version": "2.0.0"
     },
-    "servers": [
-        {
-            "url": "https://raw.githubusercontent.com/jandersongarcia/EchoAPI/main/app/docs/openapi.json",
-            "description": "Servidor local"
-        }
-    ],
     "paths": {
         "/": {
             "get": {
@@ -37,12 +31,271 @@
                     }
                 }
             }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User login",
+                "operationId": "363e422b5a8c763fa1ea6fd03a77481d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "example": "user@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful"
+                    },
+                    "400": {
+                        "description": "Missing required fields"
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register a new user",
+                "operationId": "10c02a951e844462c465d0e576b8c942",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User successfully registered"
+                    },
+                    "400": {
+                        "description": "Missing required fields"
+                    },
+                    "500": {
+                        "description": "Registration failed"
+                    }
+                }
+            }
+        },
+        "/todo": {
+            "get": {
+                "tags": [
+                    "Todo"
+                ],
+                "summary": "List all records",
+                "operationId": "cbe4bd96db6f3bcc1daf8f420cbf3178",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Todo"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Todo"
+                ],
+                "summary": "Create a new record",
+                "operationId": "c26ca52d18da0d014c896229e439bf5f",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Todo"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        },
+        "/todo/id": {
+            "get": {
+                "tags": [
+                    "Todo"
+                ],
+                "summary": "Get a single record",
+                "operationId": "3943cb194054d5571298c27ec67d8a3a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Todo"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Todo"
+                ],
+                "summary": "Update a record",
+                "operationId": "9e44aa04017ac79df687969dd3e34ede",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Todo"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Todo"
+                ],
+                "summary": "Delete a record",
+                "operationId": "a0caa2e5a2f7835019bca4c7add6e053",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Todo": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "task": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "favorite": {
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "completed_at": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            }
         }
     },
     "tags": [
         {
+            "name": "Authentication",
+            "description": "Endpoints for user login and registration"
+        },
+        {
             "name": "Sistema",
             "description": "Endpoints de sistema"
+        },
+        {
+            "name": "Todo"
         }
     ]
 }

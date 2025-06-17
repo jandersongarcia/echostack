@@ -9,6 +9,15 @@ DB_NAME=database_name
 DB_USER=root
 DB_PASS=password
 
+# Email configuration
+MAIL_DRIVER=smtp
+MAIL_HOST=smtp.yourdomain.com
+MAIL_PORT=587
+MAIL_USERNAME=your@email.com
+MAIL_PASSWORD=your_password
+MAIL_FROM_NAME="EchoAPI Team"
+MAIL_FROM_ADDRESS=support@yourdomain.com
+
 # Telegram error notifications
 # Bot token provided by BotFather (example: 123456789:ABCDefghIJKlmNOPqrSTUvwxYZ)
 TELEGRAM_BOT_TOKEN=

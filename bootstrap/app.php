@@ -74,7 +74,7 @@ if (!empty($botToken) && !empty($chatId)) {
 // MIDDLEWARES
 // ==========================
 
-$middlewareLoader = new MiddlewareLoader($logger);
+$middlewareLoader = new \Core\MiddlewareLoader($logger, $database);
 
 // ==========================
 // ROTAS

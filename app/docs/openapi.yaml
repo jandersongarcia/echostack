@@ -8,7 +8,7 @@ info:
     url: https://github.com/jandersongarcia
 
 servers:
-  - url: http://localhost:8080/v1
+  - url: http://filedow.net/v1
     description: Ambiente local
 
 paths:

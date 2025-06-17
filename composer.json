@@ -25,7 +25,8 @@
         "altorouter/altorouter": "^2.0",
         "catfan/medoo": "^2.1",
         "monolog/monolog": "^3.0",
-        "symfony/console": "^7.3"
+        "symfony/console": "^7.3",
+        "phpmailer/phpmailer": "^6.10"
     },
     "scripts": {
         "log:test": "php core/Scripts/log-test.php",
@@ -36,8 +37,10 @@
         "make:crud": "php core/Scripts/make-crud.php",
         "list:crud": "php core/Scripts/list-cruds.php",
         "delete:crud": "php core/Scripts/delete-crud.php",
-        "swagger:build": "vendor/bin/openapi --bootstrap core/OpenApi/bootstrap-swagger.php --output app/docs/openapi.json core/ src/"
-
+        "make:auth": "php core/Scripts/make-auth.php",
+        "migration:auth": "php core/Scripts/install-auth.php",
+        "delete:auth": "php core/Scripts/delete-auth.php",
+        "swagger:build": "vendor/bin/openapi --bootstrap core/OpenApi/bootstrap-swagger.php --output app/docs/openapi.json src/"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,

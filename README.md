@@ -4,7 +4,7 @@ EchoAPI is a minimalist microstack for developers who want to build REST APIs in
 It works like a backend toolbox — offering only the essentials for routing, database, validation, authentication, and logging.
 Perfect for those who want to avoid heavy frameworks and focus on a functional, lightweight, and easy-to-maintain API.
 
-It offers basic support for:
+It provides basic support for:
 
 * Routing with AltoRouter
 * Lightweight ORM with Medoo
@@ -33,21 +33,21 @@ It offers basic support for:
 
 ```txt
 project-root/
-├── api/                # Public entry point for the backend (index.php)
-├── app/                # Optional frontend (React example) + Swagger docs
-│   └── docs/           # Generated OpenAPI documentation (openapi.json)
+├── app/                # Optional frontend (e.g., React example) and documentation
+│   ├── api/            # Public entry point for the backend
+│   └── docs/           # Generated OpenAPI documentation file
 ├── bootstrap/          # Application initialization
 ├── config/             # Environment and database configurations
-├── core/               # EchoAPI's internal engine
-│   ├── Helpers/        # General-purpose utility functions
-│   ├── Migration/      # Database install/rollback/update scripts
-│   ├── OpenApi/        # Swagger/OpenAPI config and bootstrap
-│   ├── Scripts/        # CLI scripts (make, delete, etc)
-│   ├── Services/       # Internal infrastructure services
+├── core/               # EchoAPI's core engine
+│   ├── Helpers/        # General-purpose helper functions
+│   ├── Migration/      # Database install, rollback, or update scripts
+│   ├── OpenApi/        # Swagger/OpenAPI configuration and bootstrap
+│   ├── Scripts/        # CLI scripts (make, delete, etc.)
+│   ├── Services/       # Internal services
 │   ├── Utils/          # Core utility classes
-│   └── Dispatcher.php  # Main kernel (loads routes and middlewares)
+│   └── Dispatcher.php  # Main kernel
 ├── logs/               # Log files
-├── middleware/         # Custom middlewares (Auth, CORS, API Key checks)
+├── middleware/         # Custom middlewares
 ├── routes/             # Routes file (web.php)
 ├── src/                # Main application code
 │   ├── Controllers/    # REST Controllers
@@ -56,10 +56,10 @@ project-root/
 │   ├── Services/       # Business logic
 │   ├── Utils/          # Project-specific helpers
 │   ├── Validators/     # Custom validations
-│   └── Views/          # Output templates (emails, etc)
-│     └── emails/       # Email templates (password reset, welcome, etc)
+│   └── Views/          # Output templates
+│     └── emails/       # Email templates (e.g., password reset, welcome)
 ├── .env                # Environment variables
-├── composer.json       # Dependencies and CLI scripts
+├── composer.json       # Dependencies and scripts
 └── README.md           # Project documentation
 ```
 
@@ -93,9 +93,9 @@ Standard request flow:
 
 1. Client sends a request (e.g., `GET /v1/health`)
 2. `public/index.php` acts as the entry point
-3. Middlewares (Auth, API Key, etc) are loaded
+3. Middlewares (Auth, API Key, etc.) are loaded
 4. The route is resolved
-5. The Controller returns a JSON response
+5. The Controller responds with JSON
 
 ### Test via terminal:
 
@@ -107,37 +107,73 @@ curl http://localhost:8080/v1/health
 
 ## API Key Authentication
 
+EchoAPI offers a simple **API Key** authentication system, ideal for protecting endpoints without the complexity of JWT or OAuth.
+
+### Generate a new API Key
+
 ```bash
 composer generate:apikey
 ```
 
-Use the key in your requests:
+> **Note:**
+> When you run this command, EchoAPI will generate a new random key and automatically fill the `SECRET_KEY` field in the file:
+
+```txt
+.env  (at the root of the project)
+```
+
+### How to use the API Key in requests
+
+Add the **Authorization** header to all protected requests:
 
 ```http
 Authorization: Bearer YOUR_API_KEY
 ```
 
+If the key is incorrect or missing, the API will return an HTTP 401 (Unauthorized) error.
+
 ---
 
 ## Automated CRUD
 
-### Create
+EchoAPI allows you to quickly generate a complete CRUD based on an existing table in your database.
+This feature saves time by automatically creating the **Model**, **Service**, **Controller**, and the corresponding route.
+
+> **Important:**
+> For this command to work, your database must be accessible and the table must already exist.
+
+### Create a CRUD
 
 ```bash
-composer make:crud usuarios
+composer make:crud users
 ```
 
-### Delete
+This command will generate:
+
+* `src/Models/Users.php`
+* `src/Services/UsersService.php`
+* `src/Controllers/UsersController.php`
+* Route entries in `routes/web.php`
+
+---
+
+### Delete a CRUD
 
 ```bash
-composer delete:crud usuarios
+composer delete:crud users
 ```
 
-### List
+Removes all files related to the specified CRUD (Model, Service, Controller, and route).
+
+---
+
+### List existing CRUDs
 
 ```bash
 composer list:crud
 ```
+
+Displays a list of all generated CRUDs and their corresponding routes.
 
 ---
 
@@ -149,7 +185,7 @@ composer list:crud
 composer make:auth
 ```
 
-Generates Controllers, Services, Middlewares, and routes.
+Creates Controllers, Services, Middlewares, and routes.
 
 ---
 
@@ -188,7 +224,7 @@ composer delete:auth
 After login, the system returns a JWT:
 
 ```http
-Authorization: Bearer YOUR_JWT_TOKEN
+Authorization: Bearer YOUR_JWT_HERE
 ```
 
 ---
@@ -199,13 +235,44 @@ Authorization: Bearer YOUR_JWT_TOKEN
 composer swagger:build
 ```
 
-Generates `app/docs/openapi.json`
+This command will generate the following file:
+
+```txt
+app/docs/openapi.json
+```
+
+> **Important:**
+> To view the documentation in your browser, you need to set the correct API URL in the following file:
+
+```txt
+app/docs/swagger-initializer.js
+```
+
+Edit the line that defines the Swagger URL to point to your actual `openapi.json` path. Example:
+
+```javascript
+window.ui = SwaggerUIBundle({
+  url: "http://filedow.net/docs/openapi.json",  // 🔴 Change this to match your environment
+  dom_id: '#swagger-ui',
+  deepLinking: true,
+  presets: [
+    SwaggerUIBundle.presets.apis,
+    SwaggerUIStandalonePreset
+  ],
+  plugins: [
+    SwaggerUIBundle.plugins.DownloadUrl
+  ],
+  layout: "StandaloneLayout"
+});
+```
+
+Once configured, open Swagger UI in your browser (e.g., `http://localhost:8080/app/docs/`).
 
 ---
 
-## Telegram Integration (Optional)
+## Telegram Integration
 
-Set up your `.env`:
+Configure your `.env`:
 
 ```ini
 TELEGRAM_BOT_TOKEN=your_token
@@ -217,7 +284,7 @@ ERROR_NOTIFY_CATEGORIES=critical,error,alert
 
 ## Available Scripts
 
-| Command           | Description                                                    |
+| Command           | Function                                                       |
 | ----------------- | -------------------------------------------------------------- |
 | `make:module`     | Generate a basic module (Controller, Service, Model)           |
 | `delete:module`   | Remove the specified module files                              |
@@ -227,10 +294,10 @@ ERROR_NOTIFY_CATEGORIES=critical,error,alert
 | `make:auth`       | Generate the JWT authentication system                         |
 | `migration:auth`  | Run SQL migrations for Auth                                    |
 | `delete:auth`     | Remove the generated authentication system                     |
-| `generate:apikey` | Generate a new API Key                                         |
-| `log:test`        | Generate test logs                                             |
+| `generate:apikey` | Create a new API Key                                           |
+| `log:test`        | Generate example logs                                          |
 | `telegram:test`   | Send a test message to Telegram                                |
-| `swagger:build`   | Build OpenAPI documentation                                    |
+| `swagger:build`   | Generate OpenAPI documentation                                 |
 
 ---
 

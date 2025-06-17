@@ -1,15 +1,15 @@
 # EchoAPI - Microstack PHP para APIs Ligeras
 
-EchoAPI es una microestructura minimalista para quienes quieren construir APIs REST en PHP de forma rápida, organizada y con bajo acoplamiento.
-Funciona como una toolbox de backend, ofreciendo solo lo esencial para enrutamiento, base de datos, validación, autenticación y logs.
-Perfecto para quienes quieren evitar frameworks pesados y centrarse en una API funcional, ligera y fácil de mantener.
+EchoAPI es una microestructura minimalista para desarrolladores que quieren construir APIs REST en PHP de forma rápida, organizada y con bajo acoplamiento.
+Funciona como una caja de herramientas de backend, ofreciendo solo lo esencial para enrutamiento, base de datos, validación, autenticación y registros (logs).
+Perfecto para quienes quieren evitar frameworks pesados y enfocarse en una API funcional, ligera y fácil de mantener.
 
-Ofrece soporte básico para:
+Proporciona soporte básico para:
 
 * Enrutamiento con AltoRouter
 * ORM ligero con Medoo
 * Validación con Respect\Validation
-* Logs con Monolog
+* Registros con Monolog
 * Autenticación por API Key
 * Autenticación JWT (Opcional)
 * Integración opcional con Telegram
@@ -33,21 +33,21 @@ Ofrece soporte básico para:
 
 ```txt
 project-root/
-├── api/                # Punto de entrada público para el backend (index.php)
-├── app/                # Frontend opcional (ejemplo en React) + Documentación Swagger
-│   └── docs/           # Documentación OpenAPI generada (openapi.json)
+├── app/                # Frontend opcional (ejemplo en React) y documentación
+│   ├── api/            # Punto de entrada público al backend
+│   └── docs/           # Archivo generado de documentación OpenAPI
 ├── bootstrap/          # Inicialización de la aplicación
 ├── config/             # Configuraciones de entorno y base de datos
-├── core/               # Motor interno de EchoAPI
-│   ├── Helpers/        # Funciones utilitarias generales
+├── core/               # Núcleo interno de EchoAPI
+│   ├── Helpers/        # Funciones auxiliares generales
 │   ├── Migration/      # Scripts de instalación, rollback o actualización de base de datos
-│   ├── OpenApi/        # Configuración y bootstrap para Swagger/OpenAPI
+│   ├── OpenApi/        # Configuración y bootstrap de Swagger/OpenAPI
 │   ├── Scripts/        # Scripts CLI (make, delete, etc)
 │   ├── Services/       # Servicios internos
 │   ├── Utils/          # Clases utilitarias internas del Core
-│   └── Dispatcher.php  # Kernel principal (carga rutas y middlewares)
-├── logs/               # Archivos de log
-├── middleware/         # Middlewares personalizados (Auth, CORS, API Key, etc)
+│   └── Dispatcher.php  # Kernel principal
+├── logs/               # Archivos de logs
+├── middleware/         # Middlewares personalizados
 ├── routes/             # Archivo de rutas (web.php)
 ├── src/                # Código principal de la aplicación
 │   ├── Controllers/    # Controllers REST
@@ -56,10 +56,10 @@ project-root/
 │   ├── Services/       # Lógica de negocio
 │   ├── Utils/          # Helpers específicos del proyecto
 │   ├── Validators/     # Validaciones personalizadas
-│   └── Views/          # Plantillas de salida (emails, etc)
+│   └── Views/          # Plantillas de salida
 │     └── emails/       # Plantillas de email (recuperación de contraseña, bienvenida, etc)
 ├── .env                # Variables de entorno
-├── composer.json       # Dependencias y scripts CLI
+├── composer.json       # Dependencias y scripts
 └── README.md           # Documentación del proyecto
 ```
 
@@ -68,19 +68,19 @@ project-root/
 ## Instalación
 
 ```bash
-# Clona el repositorio
+# Clonar el repositorio
 git clone https://github.com/jandersongarcia/EchoAPI.git
 cd EchoAPI
 
-# Instala las dependencias
+# Instalar dependencias
 composer install
 
-# Copia el archivo de entorno
+# Copiar el archivo de entorno
 cp .env_root .env
 
-# Edita el archivo .env con tus datos de base de datos
+# Editar el archivo .env con las configuraciones de la base de datos
 
-# Configura permisos para la carpeta de logs (Linux/macOS)
+# Configurar permisos para la carpeta de logs (Linux/macOS)
 mkdir logs
 chmod -R 775 logs
 ```
@@ -91,13 +91,13 @@ chmod -R 775 logs
 
 Flujo estándar de una solicitud:
 
-1. El cliente envía una solicitud (ejemplo: `GET /v1/health`)
+1. El cliente envía una solicitud (por ejemplo: `GET /v1/health`)
 2. `public/index.php` actúa como punto de entrada
-3. Se cargan los middlewares (Auth, API Key, etc)
-4. Se resuelve la ruta
-5. El Controller responde en formato JSON
+3. Se cargan los middlewares (Auth, API Key, etc.)
+4. La ruta se resuelve
+5. El Controller responde con JSON
 
-### Test en terminal:
+### Prueba en terminal:
 
 ```bash
 curl http://localhost:8080/v1/health
@@ -107,37 +107,73 @@ curl http://localhost:8080/v1/health
 
 ## Autenticación por API Key
 
+EchoAPI ofrece un sistema sencillo de autenticación mediante **API Key**, ideal para proteger endpoints sin la complejidad de JWT u OAuth.
+
+### Generar una nueva API Key
+
 ```bash
 composer generate:apikey
 ```
 
-Usa la key en las solicitudes:
+> **Nota:**
+> Al ejecutar este comando, EchoAPI generará una clave aleatoria y la insertará automáticamente en el campo `SECRET_KEY` dentro del archivo:
+
+```txt
+.env  (en la raíz del proyecto)
+```
+
+### Cómo usar la API Key en las solicitudes
+
+Añade el encabezado **Authorization** en todas las solicitudes protegidas:
 
 ```http
 Authorization: Bearer TU_API_KEY
 ```
 
+Si la clave es incorrecta o está ausente, la API devolverá un error HTTP 401 (Unauthorized).
+
 ---
 
 ## CRUD Automatizado
 
-### Crear
+EchoAPI te permite generar rápidamente un CRUD completo basado en una tabla existente en tu base de datos.
+Esta función ahorra tiempo creando automáticamente el **Model**, **Service**, **Controller** y el fragmento de ruta correspondiente.
+
+> **Importante:**
+> Para que el comando funcione, la base de datos debe estar conectada y la tabla debe existir previamente.
+
+### Crear un CRUD
 
 ```bash
-composer make:crud usuarios
+composer make:crud users
 ```
 
-### Eliminar
+Este comando generará:
+
+* `src/Models/Users.php`
+* `src/Services/UsersService.php`
+* `src/Controllers/UsersController.php`
+* Entradas de ruta en `routes/web.php`
+
+---
+
+### Eliminar un CRUD
 
 ```bash
-composer delete:crud usuarios
+composer delete:crud users
 ```
 
-### Listar
+Elimina todos los archivos relacionados con el CRUD especificado (Model, Service, Controller y ruta).
+
+---
+
+### Listar CRUDs existentes
 
 ```bash
 composer list:crud
 ```
+
+Muestra una lista de todos los CRUDs generados y sus respectivas rutas.
 
 ---
 
@@ -149,11 +185,11 @@ composer list:crud
 composer make:auth
 ```
 
-Crea Controllers, Services, Middlewares y rutas.
+Genera Controllers, Services, Middlewares y rutas.
 
 ---
 
-### Ejecutar migraciones para el Auth
+### Crear las tablas en la base de datos (migrations)
 
 ```bash
 composer migration:auth
@@ -177,13 +213,13 @@ composer delete:auth
 
 ### Endpoints por defecto del Auth JWT
 
-| Método | Endpoint          | Función                                 |
-| ------ | ----------------- | --------------------------------------- |
-| POST   | /v1/auth/login    | Inicio de sesión con email/contraseña   |
-| POST   | /v1/auth/register | Registro de usuario                     |
-| POST   | /v1/auth/recover  | Solicitud de recuperación de contraseña |
-| POST   | /v1/auth/reset    | Restablecer contraseña con token        |
-| POST   | /v1/auth/logout   | Cerrar sesión                           |
+| Método | Endpoint          | Función                                  |
+| ------ | ----------------- | ---------------------------------------- |
+| POST   | /v1/auth/login    | Iniciar sesión con email/contraseña      |
+| POST   | /v1/auth/register | Registrar nuevo usuario                  |
+| POST   | /v1/auth/recover  | Solicitar restablecimiento de contraseña |
+| POST   | /v1/auth/reset    | Restablecer contraseña vía token         |
+| POST   | /v1/auth/logout   | Cerrar sesión del usuario                |
 
 Después del login, el sistema devuelve un JWT:
 
@@ -199,11 +235,42 @@ Authorization: Bearer TU_JWT_AQUI
 composer swagger:build
 ```
 
-Genera `app/docs/openapi.json`
+Este comando generará el archivo:
+
+```txt
+app/docs/openapi.json
+```
+
+> **Importante:**
+> Para visualizar la documentación en el navegador, debes configurar la URL correcta de la API en el siguiente archivo:
+
+```txt
+app/docs/swagger-initializer.js
+```
+
+Edita la línea que define la URL del Swagger para que apunte a tu archivo `openapi.json`. Ejemplo:
+
+```javascript
+window.ui = SwaggerUIBundle({
+  url: "http://filedow.net/docs/openapi.json",  // 🔴 Cambia esta línea según tu entorno
+  dom_id: '#swagger-ui',
+  deepLinking: true,
+  presets: [
+    SwaggerUIBundle.presets.apis,
+    SwaggerUIStandalonePreset
+  ],
+  plugins: [
+    SwaggerUIBundle.plugins.DownloadUrl
+  ],
+  layout: "StandaloneLayout"
+});
+```
+
+Luego abre Swagger UI en tu navegador (por ejemplo: `http://localhost:8080/app/docs/`).
 
 ---
 
-## Integración con Telegram (Opcional)
+## Integración con Telegram
 
 Configuración en el `.env`:
 
@@ -217,20 +284,20 @@ ERROR_NOTIFY_CATEGORIES=critical,error,alert
 
 ## Scripts Disponibles
 
-| Comando           | Función                                              |
-| ----------------- | ---------------------------------------------------- |
-| `make:module`     | Genera un módulo básico (Controller, Service, Model) |
-| `delete:module`   | Elimina los archivos del módulo especificado         |
-| `make:crud`       | Crea Model, Service, Controller y rutas según tabla  |
-| `delete:crud`     | Elimina el CRUD generado                             |
-| `list:crud`       | Lista todos los CRUDs + rutas registradas            |
-| `make:auth`       | Genera el sistema de autenticación JWT               |
-| `migration:auth`  | Ejecuta las migraciones SQL del Auth                 |
-| `delete:auth`     | Elimina el sistema de autenticación JWT              |
-| `generate:apikey` | Crea una nueva API Key                               |
-| `log:test`        | Genera logs de ejemplo                               |
-| `telegram:test`   | Envía un mensaje de prueba a Telegram                |
-| `swagger:build`   | Genera la documentación OpenAPI                      |
+| Comando           | Función                                                |
+| ----------------- | ------------------------------------------------------ |
+| `make:module`     | Genera un módulo básico (Controller, Service, Model)   |
+| `delete:module`   | Elimina los archivos del módulo especificado           |
+| `make:crud`       | Crea Model, Service, Controller y rutas según la tabla |
+| `delete:crud`     | Elimina el CRUD generado                               |
+| `list:crud`       | Lista todos los CRUDs y rutas registradas              |
+| `make:auth`       | Genera el sistema de autenticación JWT                 |
+| `migration:auth`  | Ejecuta las migraciones SQL del Auth                   |
+| `delete:auth`     | Elimina el sistema de autenticación JWT                |
+| `generate:apikey` | Crea una nueva API Key                                 |
+| `log:test`        | Genera logs de ejemplo                                 |
+| `telegram:test`   | Envía un mensaje de prueba a Telegram                  |
+| `swagger:build`   | Genera documentación OpenAPI                           |
 
 ---
 

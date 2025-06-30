@@ -1,4 +1,15 @@
-<!-- HTML for static distribution bundle build -->
+<?php
+
+require __DIR__ . '/../../vendor/autoload.php';
+
+if (getenv('APP_ENV') === 'production') {
+    header('Content-Type: application/json');
+    http_response_code(403);
+    echo json_encode(['error' => 'Access forbidden in production.']);
+    exit;
+}
+
+echo '<!-- HTML for static distribution bundle build -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -16,4 +27,5 @@
     <script src="./swagger-ui-standalone-preset.js" charset="UTF-8"> </script>
     <script src="./swagger-initializer.js" charset="UTF-8"> </script>
   </body>
-</html>
+</html>';
+

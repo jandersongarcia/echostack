@@ -21,7 +21,7 @@ class PathResolver
 
     public static function logsPath(string $path = ''): string
     {
-        return self::basePath() . DIRECTORY_SEPARATOR . 'logs' . ($path ? DIRECTORY_SEPARATOR . $path : '');
+        return self::basePath() . DIRECTORY_SEPARATOR . 'storage/logs' . ($path ? DIRECTORY_SEPARATOR . $path : '');
     }
 
     public static function envPath(): string

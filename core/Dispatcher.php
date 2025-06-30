@@ -85,7 +85,7 @@ class Dispatcher
             ]);
 
             http_response_code(500);
-            echo json_encode(['error' => 'Internal server error']);
+            echo json_encode(['error' => 'internal_error']);
         }
     }
 }

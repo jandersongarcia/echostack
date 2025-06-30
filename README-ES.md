@@ -116,7 +116,7 @@ composer generate:apikey
 ```
 
 > **Nota:**
-> Al ejecutar este comando, EchoAPI generará una clave aleatoria y la insertará automáticamente en el campo `SECRET_KEY` dentro del archivo:
+> Al ejecutar este comando, EchoAPI generará una clave aleatoria y la insertará automáticamente en el campo `JWT_SECRET` dentro del archivo:
 
 ```txt
 .env  (en la raíz del proyecto)

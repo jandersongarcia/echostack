@@ -1,6 +1,7 @@
 <?php
 
-// Autoload centralizado via caminho absoluto
+namespace Core\Scripts;
+
 require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
 use Dotenv\Dotenv;
@@ -8,61 +9,59 @@ use Core\Helpers\PathResolver;
 
 // Resolve dinamicamente a raiz do projeto
 $basePath = PathResolver::basePath();
+echo "Base Path being used: {$basePath}\n";
 
-echo "Base Path being used: " . $basePath . PHP_EOL;
-
-// Verifica se o .env existe no local esperado
-if (!file_exists($basePath . '/.env')) {
-    echo "❌ .env file not found at expected location: " . $basePath . '/.env' . PHP_EOL;
+// Verifica se o .env existe
+$envPath = $basePath . '/.env';
+if (!file_exists($envPath)) {
+    echo "❌ .env file not found at expected location: {$envPath}\n";
     exit(1);
 }
-
 echo "✅ .env file found.\n";
 
-// Carrega o .env
+// Carrega variáveis do .env
 $dotenv = Dotenv::createImmutable($basePath);
 $dotenv->safeLoad();
 
-// Teste se as variáveis foram carregadas corretamente
-$dotenvVars = ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'];
-$missingVars = [];
+// Verifica variáveis obrigatórias
+$requiredVars = ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'];
+$missing = [];
 
-foreach ($dotenvVars as $var) {
-    if (!array_key_exists($var, $_ENV)) {
-        $missingVars[] = $var;
+foreach ($requiredVars as $var) {
+    if (empty($_ENV[$var])) {
+        $missing[] = $var;
     }
 }
 
-if (!empty($missingVars)) {
-    echo "❌ The following environment variables were not loaded correctly from .env:\n";
-    foreach ($missingVars as $var) {
+if (!empty($missing)) {
+    echo "❌ Missing required .env variables:\n";
+    foreach ($missing as $var) {
         echo " - {$var}\n";
     }
-    exit(1);
+    exit(2);
 }
 
-echo "✅ All required .env variables loaded successfully.\n";
-
-// ⚠ ATENÇÃO: mudamos para $_ENV para evitar o problema do getenv() no Windows.
 $botToken = $_ENV['TELEGRAM_BOT_TOKEN'];
 $chatId = $_ENV['TELEGRAM_CHAT_ID'];
 $message = '🚀 Telegram test message from EchoAPI';
 
-// Exibe as variáveis carregadas
+if (trim($message) === '') {
+    echo "❌ Message text is empty. Nothing was sent to Telegram.\n";
+    exit(3);
+}
+
 echo "🔧 Testing Telegram configuration...\n";
 echo "🔑 Bot Token: " . substr($botToken, 0, 10) . "***********\n";
-echo "💬 Chat ID: " . $chatId . "\n";
+echo "💬 Chat ID: {$chatId}\n";
 
-// Monta a URL da API
+// Monta a requisição para a API do Telegram
 $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
-
 $data = [
     'chat_id' => $chatId,
     'text' => $message,
     'parse_mode' => 'Markdown'
 ];
 
-// Executa a requisição HTTP
 $options = [
     'http' => [
         'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
@@ -73,46 +72,49 @@ $options = [
 ];
 
 $context = stream_context_create($options);
-$result = file_get_contents($url, false, $context);
+$result = @file_get_contents($url, false, $context);
 
-// Se falhar na comunicação:
 if ($result === false) {
     echo "❌ Failed to contact Telegram API. Check your internet connection or firewall.\n";
-    exit(2);
+    exit(4);
 }
 
-// Decodifica a resposta da API
 $response = json_decode($result, true);
 
-// Analisa a resposta
-if (isset($response['ok']) && $response['ok'] === true) {
-    echo "✅ Test message sent successfully to Telegram.\n";
-} else {
-    echo "❌ Telegram API returned an error:\n";
-
-    if (isset($response['description'])) {
-        echo "📄 Description: " . $response['description'] . "\n";
-    }
-
-    if (isset($response['error_code'])) {
-        echo "🚫 Error Code: " . $response['error_code'] . "\n";
-
-        switch ($response['error_code']) {
-            case 400:
-                echo "⚠ Possible causes: invalid chat ID or malformed request.\n";
-                break;
-            case 403:
-                echo "⚠ Possible causes: bot was not added to the group or lacks permission.\n";
-                break;
-            case 401:
-                echo "⚠ Invalid BOT token.\n";
-                break;
-            default:
-                echo "⚠ Unknown error.\n";
-                break;
-        }
-    }
-
-    echo "\nFull API response:\n";
-    print_r($response);
+if (!is_array($response)) {
+    echo "❌ Invalid response from Telegram API.\nRaw: {$result}\n";
+    exit(5);
 }
+
+if ($response['ok'] ?? false) {
+    echo "✅ Test message sent successfully to Telegram.\n";
+    exit(0);
+}
+
+// Erro conhecido
+echo "❌ Telegram API returned an error:\n";
+
+if (isset($response['description'])) {
+    echo "📄 Description: {$response['description']}\n";
+}
+
+if (isset($response['error_code'])) {
+    echo "🚫 Error Code: {$response['error_code']}\n";
+    switch ($response['error_code']) {
+        case 400:
+            echo "⚠ Possible causes: invalid chat ID or malformed request.\n";
+            break;
+        case 401:
+            echo "⚠ Invalid BOT token.\n";
+            break;
+        case 403:
+            echo "⚠ Bot was not added to the group or lacks permission.\n";
+            break;
+        default:
+            echo "⚠ Unknown error.\n";
+    }
+}
+
+echo "\nFull API response:\n";
+print_r($response);
+exit(6);

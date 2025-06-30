@@ -67,7 +67,7 @@ class HealthController
 
     private function checkFilesystem(): string
     {
-        return is_writable(__DIR__ . '/../../logs') ? 'ok' : 'fail';
+        return is_writable(__DIR__ . '/../../storage/logs') ? 'ok' : 'fail';
     }
 
     private function checkTelegram(): string

@@ -24,4 +24,4 @@ $logger->warning("Test: security warning");
 $logger->error("Test: error message");
 $logger->critical("Test: critical failure");
 
-echo "✅ Logs successfully generated. Check your /logs directory.\n";
+echo "✅ Logs successfully generated. Check your /storage/logs directory.\n";

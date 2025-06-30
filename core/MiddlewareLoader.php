@@ -4,6 +4,7 @@ namespace Core;
 
 use Medoo\Medoo;
 use Middleware\AuthMiddleware;
+use Core\Services\CacheService; // não esqueça esse use
 
 class MiddlewareLoader
 {
@@ -18,8 +19,11 @@ class MiddlewareLoader
 
     public function load(): array
     {
+        // Cria a instância do cache
+        $cache = new CacheService();
+
         return [
-            new AuthMiddleware($this->logger, $this->db),
+            new AuthMiddleware($this->logger, $this->db, $cache),
         ];
     }
 }

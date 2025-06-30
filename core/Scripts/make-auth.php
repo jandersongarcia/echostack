@@ -31,15 +31,15 @@ $database = new Medoo([
 //out('INFO', 'Checking firebase/php-jwt...');
 //exec('composer require firebase/php-jwt');
 
-// 2. Ensure SECRET_KEY exists in .env
-out('INFO', 'Checking SECRET_KEY in .env...');
+// 2. Ensure JWT_SECRET exists in .env
+out('INFO', 'Checking JWT_SECRET in .env...');
 $envPath = DIR . '/.env';
 $envContent = file_get_contents($envPath);
-if (!str_contains($envContent, 'SECRET_KEY=')) {
-    out('WARNING', 'SECRET_KEY not found. Generating with composer generate:key...', 'yellow');
+if (!str_contains($envContent, 'JWT_SECRET=')) {
+    out('WARNING', 'JWT_SECRET not found. Generating with composer generate:key...', 'yellow');
     exec('composer generate:key');
 } else {
-    out('INFO', 'SECRET_KEY already exists.');
+    out('INFO', 'JWT_SECRET already exists.');
 }
 
 // 3. Create AuthController with Swagger annotations
@@ -197,7 +197,7 @@ class AuthService
             'charset' => 'utf8mb4'
         ]);
 
-        \$this->key = getenv('SECRET_KEY');
+        \$this->key = getenv('JWT_SECRET');
     }
 
     public function login(\$email, \$password)
@@ -298,7 +298,7 @@ class JwtAuthMiddleware
         }
         \$token = trim(str_replace('Bearer ', '', \$authHeader));
         try {
-            \$key = getenv('SECRET_KEY');
+            \$key = getenv('JWT_SECRET');
             \$decoded = JWT::decode(\$token, new Key(\$key, 'HS256'));
             \$_SERVER['user_id'] = \$decoded->sub;
         } catch (\Exception \$e) {
@@ -332,11 +332,12 @@ $existingRoutes = file_get_contents($routeFile);
 
 $routesToAdd = [
     "// Auto-generated CRUD routes for Auth",
-    "\$router->map('POST', '/auth/login', 'AuthController#login');",
-    "\$router->map('POST', '/auth/register', 'AuthController#register');",
-    "\$router->map('POST', '/auth/forgot-password', 'AuthController#forgotPassword');",
-    "\$router->map('POST', '/auth/reset-password', 'AuthController#resetPassword');",
-    "\$router->map('POST', '/auth/logout', 'AuthController#logout', ['middleware' => 'JwtAuth']);"
+    "\$router->map('POST', '/auth/login', 'App\Controllers\AuthController@login');",
+    "\$router->map('POST', '/auth/register', 'App\Controllers\AuthController@register');",
+    "\$router->map('POST', '/auth/forgot-password', 'App\Controllers\AuthController@forgotPassword');",
+    "\$router->map('POST', '/auth/reset-password', 'App\Controllers\AuthController@resetPassword');",
+    "\$router->map('GET', '/auth/reset-password', 'App\\Controllers\\AuthController@resetPassword');",
+    "\$router->map('POST', '/auth/logout', 'App\Controllers\AuthController@logout');"
 ];
 
 $newRoutes = "";
@@ -356,7 +357,42 @@ if (!empty($newRoutes)) {
     out('INFO', 'No new routes were added. All auth routes already exist.');
 }
 
-out('INFO', 'running swagger:build');
+// 8. Adicionar as rotas públicas em public-routes.php
+$publicRoutesFile = DIR . '/routes/public-routes.php';
+
+// Garante que o arquivo existe (se não existir, cria com array vazio)
+if (!file_exists($publicRoutesFile)) {
+    file_put_contents($publicRoutesFile, "<?php\nreturn [];\n");
+}
+
+$existingPublicRoutes = include $publicRoutesFile;
+if (!is_array($existingPublicRoutes)) {
+    $existingPublicRoutes = [];
+}
+
+$newPublicRoutes = [
+    '/auth/login',
+    '/auth/register',
+    '/auth/forgot-password',
+    '/auth/reset-password'
+];
+
+// Faz merge e remove duplicatas
+$finalPublicRoutes = array_values(array_unique(array_merge($existingPublicRoutes, $newPublicRoutes)));
+
+// Monta o array em sintaxe short ([]) com cada rota numa linha
+$formattedRoutes = "[\n";
+foreach ($finalPublicRoutes as $route) {
+    $formattedRoutes .= "    '" . addslashes($route) . "',\n";
+}
+$formattedRoutes .= "];\n";
+
+// Grava o arquivo
+file_put_contents($publicRoutesFile, "<?php\nreturn " . $formattedRoutes);
+
+out('SUCCESS', 'Public routes updated in routes/public-routes.php (without overwriting existing ones)', 'green');
+
+out('INFO', 'Running swagger:build');
 echo shell_exec("composer swagger:build");
 
 out('SUCCESS', 'Auth installation completed successfully!', 'green');

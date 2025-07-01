@@ -17,7 +17,7 @@ class JwtAuthMiddleware
         }
         $token = trim(str_replace('Bearer ', '', $authHeader));
         try {
-            $key = $jwtSecret = $_ENV['JWT_SECRET'] ?? null;
+            $key = $_ENV('JWT_SECRET');
             $decoded = JWT::decode($token, new Key($key, 'HS256'));
             $_SERVER['user_id'] = $decoded->sub;
         } catch (\Exception $e) {

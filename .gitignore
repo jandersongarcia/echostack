@@ -8,10 +8,7 @@ composer.lock
 /storage/logs/
 /storage/cache/
 /Views/
-/src/Controllers/AuthController.php
-/src/Services/
-/src/Utils/
-/src/Views/
+/old/
 
 *.bak
 

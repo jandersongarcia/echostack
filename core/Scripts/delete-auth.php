@@ -36,7 +36,9 @@ out('INFO', $deleteTables ? 'Mode: FULL deletion (files + routes + database tabl
 $filesToDelete = [
     DIR . '/src/Controllers/AuthController.php',
     DIR . '/src/Services/AuthService.php',
-    DIR . '/Middleware/JwtAuthMiddleware.php'
+    DIR . '/Middleware/JwtAuthMiddleware.php',
+    DIR . '/src/Utils/MailHelper.php',
+    DIR . '/src/Views/emails/recover-template.php',
 ];
 
 foreach ($filesToDelete as $file) {

@@ -241,10 +241,12 @@
                                 ],
                                 "properties": {
                                     "token": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "a1b2c3d4e5"
                                     },
                                     "new_password": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "NovaSenha123!"
                                     }
                                 },
                                 "type": "object"

@@ -75,7 +75,8 @@ class AuthController
      *   @OA\Response(response=401, description="Invalid credentials")
      * )
      */
-    public static function login() {
+    public static function login()
+    {
         \$input = json_decode(file_get_contents('php://input'), true);
         \$result = (new AuthService())->login(\$input['email'] ?? '', \$input['password'] ?? '');
         (new JsonResponse(\$result['body'], \$result['status']))->send();
@@ -89,21 +90,31 @@ class AuthController
      *   @OA\RequestBody(
      *     required=true,
      *     @OA\JsonContent(
-     *       required={"name","email","password"},
-     *       @OA\Property(property="name", type="string"),
-     *       @OA\Property(property="email", type="string"),
-     *       @OA\Property(property="password", type="string")
+     *       required={"name", "last_name", "email", "password"},
+     *       @OA\Property(property="name", type="string", example="Janderson"),
+     *       @OA\Property(property="last_name", type="string", example="Ganjos"),
+     *       @OA\Property(property="email", type="string", example="jganjos.info@gmail.com"),
+     *       @OA\Property(property="password", type="string", format="password", example="SenhaForte123!")
      *     )
      *   ),
      *   @OA\Response(response=201, description="User created"),
      *   @OA\Response(response=400, description="Email already registered")
      * )
      */
-    public static function register() {
+    public static function register()
+    {
         \$input = json_decode(file_get_contents('php://input'), true);
-        \$result = (new AuthService())->register(\$input['name'] ?? '', \$input['email'] ?? '', \$input['password'] ?? '');
+
+        \$name = \$input['name'] ?? '';
+        \$lastName = \$input['last_name'] ?? '';
+        \$email = \$input['email'] ?? '';
+        \$password = \$input['password'] ?? '';
+
+        \$result = (new AuthService())->register(\$name, \$lastName, \$email, \$password);
+
         (new JsonResponse(\$result['body'], \$result['status']))->send();
     }
+
 
     /**
      * @OA\Post(
@@ -114,17 +125,70 @@ class AuthController
      *     required=true,
      *     @OA\JsonContent(
      *       required={"email"},
-     *       @OA\Property(property="email", type="string")
+     *       @OA\Property(property="email", type="string", format="email", example="user@example.com"),
+     *       @OA\Property(property="lang", type="string", example="en", description="Optional language code for the email template")
      *     )
      *   ),
-     *   @OA\Response(response=200, description="Reset token sent")
+     *   @OA\Response(
+     *     response=200,
+     *     description="Password recovery email sent",
+     *     @OA\JsonContent(
+     *       @OA\Property(property="success", type="string", example="email_sent")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=400,
+     *     description="Invalid email provided",
+     *     @OA\JsonContent(
+     *       @OA\Property(property="error", type="string", example="invalid_email")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=404,
+     *     description="User not found",
+     *     @OA\JsonContent(
+     *       @OA\Property(property="error", type="string", example="user_not_found")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=500,
+     *     description="Internal server error",
+     *     @OA\JsonContent(
+     *       @OA\Property(property="error", type="string", example="internal_error")
+     *     )
+     *   )
      * )
      */
-    public static function forgotPassword() {
+    public static function forgotPassword()
+    {
         \$input = json_decode(file_get_contents('php://input'), true);
-        \$result = (new AuthService())->forgotPassword(\$input['email'] ?? '');
+        \$email = trim(\$input['email'] ?? '');
+        \$lang = strtolower(\$input['lang'] ?? '');
+        if (!\$email) {
+            (new JsonResponse(['error' => 'invalid_email'], 400))->send();
+            return;
+        }
+        \$result = (new AuthService())->forgotPassword(\$email, \$lang);
         (new JsonResponse(\$result['body'], \$result['status']))->send();
     }
+
+
+    /**
+     * @OA\Get(
+     *   path="/auth/reset-password",
+     *   summary="Validate password recovery token",
+     *   tags={"Auth"},
+     *   @OA\Parameter(
+     *     name="token",
+     *     in="query",
+     *     required=true,
+     *     description="Password recovery token",
+     *     @OA\Schema(type="string", example="a1b2c3d4e5")
+     *   ),
+     *   @OA\Response(response=200, description="Token is valid"),
+     *   @OA\Response(response=400, description="Invalid or expired token")
+     * )
+     */
 
     /**
      * @OA\Post(
@@ -135,33 +199,68 @@ class AuthController
      *     required=true,
      *     @OA\JsonContent(
      *       required={"token","new_password"},
-     *       @OA\Property(property="token", type="string"),
-     *       @OA\Property(property="new_password", type="string")
+     *       @OA\Property(property="token", type="string", example="a1b2c3d4e5"),
+     *       @OA\Property(property="new_password", type="string", example="NovaSenha123!")
      *     )
      *   ),
      *   @OA\Response(response=200, description="Password reset"),
      *   @OA\Response(response=400, description="Invalid or expired token")
      * )
      */
-    public static function resetPassword() {
-        \$input = json_decode(file_get_contents('php://input'), true);
-        \$result = (new AuthService())->resetPassword(\$input['token'] ?? '', \$input['new_password'] ?? '');
+
+    public static function resetPassword()
+    {
+        if (\$_SERVER['REQUEST_METHOD'] === 'GET') {
+            \$token = \$_GET['token'] ?? '';
+            \$result = (new AuthService())->validateResetToken(\$token);
+        } else {
+            \$input = json_decode(file_get_contents('php://input'), true);
+            \$result = (new AuthService())->resetPassword(\$input['token'] ?? '', \$input['new_password'] ?? '');
+        }
+
         (new JsonResponse(\$result['body'], \$result['status']))->send();
     }
+
 
     /**
      * @OA\Post(
      *   path="/auth/logout",
-     *   summary="Logout (JWT)",
+     *   summary="Logout do usuário autenticado",
+     *   description="Revoga o token JWT atual e encerra a sessão do usuário.",
      *   tags={"Auth"},
      *   security={{"bearerAuth": {}}},
-     *   @OA\Response(response=200, description="Logged out")
+     *   @OA\Response(
+     *     response=200,
+     *     description="Logout bem-sucedido",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="string", example="logout_successful")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=401,
+     *     description="Token ausente ou revogado",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="error", type="string", example="token_revoked")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=500,
+     *     description="Erro interno no servidor",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="error", type="string", example="internal_error")
+     *     )
+     *   )
      * )
      */
-    public static function logout() {
+    public static function logout()
+    {
         \$result = (new AuthService())->logout();
         (new JsonResponse(\$result['body'], \$result['status']))->send();
     }
+
 }
 PHP
 );
@@ -177,13 +276,18 @@ file_put_contents(
 namespace App\Services;
 
 use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 use Medoo\Medoo;
+use Core\Services\LoggerFactory;
+use Core\Helpers\MiddlewareHelper;
+use Psr\Log\LoggerInterface;
 
 class AuthService
 {
-    protected \$db;
-    private \$key;
+    protected Medoo \$db;
+    private string \$key;
+    private LoggerInterface \$logger;
+
+    private \$timezone;
 
     public function __construct()
     {
@@ -197,85 +301,443 @@ class AuthService
             'charset' => 'utf8mb4'
         ]);
 
-        \$this->key = getenv('JWT_SECRET');
+        \$this->key = \$_ENV['JWT_SECRET'] ?? \$_ENV['JWT_SECRET'];
+
+        date_default_timezone_set(\$_ENV['TIME_ZONE'] ?? 'UTC');
+
+        \$this->logger = LoggerFactory::create();
+
+        if (!\$this->key || !is_string(\$this->key)) {
+            \$this->logAndNotify("JWT_SECRET not properly defined in .env file.");
+            throw new \RuntimeException("JWT_SECRET is not correctly set in the .env file.");
+        }
+
+        \$this->timezone = new \DateTimeZone(\$_ENV['TIME_ZONE'] ?? 'UTC');
+    }
+
+    private function logAndNotify(string \$message, array \$context = []): void
+    {
+        \$this->logger->error(\$message, \$context);
     }
 
     public function login(\$email, \$password)
     {
-        \$user = \$this->db->get('users', '*', ['email' => \$email]);
-        if (!\$user || !password_verify(\$password, \$user['password'])) {
-            return ['status' => 401, 'body' => ['error' => 'Invalid credentials']];
+        try {
+            \$user = \$this->db->get('users', '*', ['email' => \$email]);
+
+            \$dateNow = (new \DateTime('now', \$this->timezone))->format('Y-m-d H:i:s');
+
+            if (!\$user || !password_verify(\$password, \$user['password'])) {
+                \$this->logger->warning("Login failed", [
+                    'email_attempted' => \$email,
+                    'ip' => \$_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                    'timestamp' => \$dateNow,
+                ]);
+                return ['status' => 401, 'body' => ['error' => 'invalid_credentials']];
+            }
+
+            if (\$user['status'] != 1) {
+                \$this->logger->notice("Login rejected (account locked)", [
+                    'user_id' => \$user['id'],
+                    'email' => \$user['email'],
+                    'ip' => \$_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                    'timestamp' => \$dateNow,
+                ]);
+                return ['status' => 401, 'body' => ['error' => 'account_locked']];
+            }
+
+            \$payload = [
+                'sub' => \$user['id'],
+                'email' => \$user['email'],
+                'exp' => time() + 3600
+            ];
+
+            \$token = JWT::encode(\$payload, \$this->key, 'HS256');
+            \$tokenHash = hash('sha256', \$token);
+
+            \$this->db->insert('user_tokens', [
+                'user_id' => \$user['id'],
+                'token_hash' => \$tokenHash,
+                'creation_date' => \$dateNow,
+            ]);
+
+            if (!\$this->db->id()) {
+                \$this->logger->error("Failed to register token.", [
+                    'user_id' => \$user['id'],
+                    'token_hash' => \$tokenHash,
+                    'token_size' => strlen(\$token),
+                    'ip' => \$_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                ]);
+            } else {
+                \$this->logger->info("Token successfully registered.", [
+                    'user_id' => \$user['id'],
+                    'token_hash' => \$tokenHash,
+                ]);
+            }
+
+            // Salvar no cache
+            \$sessionKey = MiddlewareHelper::sanitizeCacheKey('session', \$tokenHash);
+
+            \$usuario = [
+                'id' => \$user['id'],
+                'name' => \$user['name'] . ' ' . \$user['last_name'],
+                'email' => \$user['email'],
+                'role_id' => \$user['role_id'] ?? null
+            ];
+
+            // Inicialize CacheService
+            \$cache = new \Core\Services\CacheService();
+            \$cache->set(\$sessionKey, \$usuario, 7200);
+
+            \$this->logger->info("Session cache created for token.", [
+                'session_key' => \$sessionKey,
+                'user_id' => \$user['id']
+            ]);
+
+            \$this->db->update('users', ['last_login' => \$dateNow], ['id' => \$user['id']]);
+
+            \$this->logger->info("Login successful.", [
+                'user_id' => \$user['id'],
+                'email' => \$user['email'],
+                'ip' => \$_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                'timestamp' => \$dateNow,
+            ]);
+
+            return [
+                'status' => 200,
+                'body' => [
+                    'success' => 'login_successful',
+                    'token' => \$token,
+                    'user' => [
+                        'id' => \$user['id'],
+                        'name' => \$user['name'] . ' ' . \$user['last_name'],
+                        'avatar' => \$user['avatar'] ?? null,
+                        'email' => \$user['email'],
+                        'status' => \$user['status'],
+                        'last_login' => \$user['last_login']
+                    ]
+                ]
+            ];
+
+        } catch (\Throwable \$e) {
+            \$this->logAndNotify("internal_error", ['exception' => \$e]);
+            return ['status' => 500, 'body' => ['error' => 'internal_error']];
         }
-
-        \$payload = [
-            'sub' => \$user['id'],
-            'email' => \$user['email'],
-            'exp' => time() + 3600
-        ];
-
-        \$token = JWT::encode(\$payload, \$this->key, 'HS256');
-        return ['status' => 200, 'body' => ['token' => \$token]];
     }
 
-    public function register(\$username, \$email, \$password)
+    public function register(\$firstName, \$lastName, \$email, \$password)
     {
-        \$exists = \$this->db->has('users', ['email' => \$email]);
-        if (\$exists) {
-            return ['status' => 400, 'body' => ['error' => 'Email already registered']];
+        try {
+            if (\$this->db->has('users', ['email' => \$email])) {
+                return ['status' => 409, 'body' => ['error' => 'email_existing']];
+            }
+
+            \$this->db->insert('users', [
+                'name' => \$firstName,
+                'last_name' => \$lastName,
+                'email' => \$email,
+                'password' => password_hash(\$password, PASSWORD_DEFAULT),
+                'creation_date' => date('Y-m-d H:i:s')
+            ]);
+
+            return ['status' => 201, 'body' => ['success' => 'user_created']];
+        } catch (\Throwable \$e) {
+            \$this->logAndNotify("Erro no register", ['exception' => \$e]);
+            return ['status' => 500, 'body' => ['error' => 'internal_error']];
         }
-
-        \$this->db->insert('users', [
-            'user' => \$username,
-            'email' => \$email,
-            'password' => password_hash(\$password, PASSWORD_DEFAULT)
-        ]);
-
-        return ['status' => 201, 'body' => ['success' => 'User created']];
     }
 
-    public function forgotPassword(\$email)
+    public function forgotPassword(\$email, \$lang = '')
     {
-        \$token = bin2hex(random_bytes(16));
+        try {
+            \$user = \$this->db->get("users", "*", ["email" => \$email]);
 
-        \$this->db->insert('password_resets', [
-            'email' => \$email,
-            'token' => \$token,
-            'expiration' => date('Y-m-d H:i:s', time() + 3600)
-        ]);
+            if (!\$user) {
+                \$this->logger->info("Password recovery failed: email not found.", [
+                    'email' => \$email,
+                    'ip' => \$_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                ]);
+                return ['status' => 404, 'body' => ['error' => 'user_not_found']];
+            }
 
-        return ['status' => 200, 'body' => ['token_reset' => \$token]];
+            // Geração do token
+            \$token = bin2hex(random_bytes(16));
+
+            \$this->db->insert('password_resets', [
+                'email' => \$email,
+                'token' => \$token,
+                'expiration' => date(
+                    'Y-m-d H:i:s',
+                    time() + (int) (\$_ENV['PASSWORD_RESET_EXPIRATION'] ?? 7200)
+                )
+            ]);
+
+            \$this->logger->notice("Password recovery token generated.", [
+                'email' => \$email,
+                'ip' => \$_SERVER['REMOTE_ADDR'] ?? 'unknown'
+            ]);
+
+            // Carrega template de e-mail
+            \$templatePath = __DIR__ . '/../Views/emails/recover-template.php';
+            if (!file_exists(\$templatePath)) {
+                throw new \Exception("Email template file not found.");
+            }
+
+            \$name = \$user['name'] ?? 'User';
+            \$expirationSeconds = (int) (\$_ENV['PASSWORD_RESET_EXPIRATION'] ?? 7200);
+            \$expirationHours = floor(\$expirationSeconds / 3600);
+            \$link = (\$_ENV['APP_URL'] ?? 'http://localhost:5173') . '/account/recovery?token=' . \$token;
+            \$link = str_replace('//', '/', \$link); // segurança: remove barras extras
+
+            // Busca pelo template no idioma
+            \$lang = preg_replace('/[^a-z]/', '', strtolower(\$lang)); // segurança
+            \$templateBase = __DIR__ . '/../Views/emails/recover-template';
+            \$templatePath = \$templateBase . (\$lang ? ".\$lang" : '') . '.php';
+
+            // fallback: default (sem extensão)
+            if (!file_exists(\$templatePath)) {
+                \$templatePath = \$templateBase . '.php';
+            }
+
+            ob_start();
+            include \$templatePath;
+            \$emailBody = ob_get_clean();
+
+            \App\Utils\MailHelper::send(\$email, 'Password Recovery', \$emailBody);
+
+            return ['status' => 200, 'body' => ['success' => 'email_sent']];
+
+        } catch (\Throwable \$e) {
+            \$this->logAndNotify("Error in forgotPassword.", [
+                'exception' => \$e,
+                'email' => \$email
+            ]);
+            return ['status' => 500, 'body' => ['error' => 'internal_error']];
+        }
     }
+
+    public function validateResetToken(\$token)
+    {
+        try {
+            \$reset = \$this->db->get('password_resets', '*', ['token' => \$token]);
+
+            if (!\$reset || strtotime(\$reset['expiration']) < time()) {
+                return ['status' => 400, 'body' => ['error' => 'invalid_or_expired']];
+            }
+
+            return ['status' => 200, 'body' => ['valid' => true]];
+        } catch (\Throwable \$e) {
+            \$this->logAndNotify("Error in validateResetToken.", [
+                'exception' => \$e,
+                'token' => \$token
+            ]);
+            return ['status' => 500, 'body' => ['error' => 'internal_error']];
+        }
+    }
+
 
     public function resetPassword(\$token, \$newPassword)
     {
-        \$reset = \$this->db->get('password_resets', '*', ['token' => \$token]);
-        if (!\$reset || strtotime(\$reset['expiration']) < time()) {
-            return ['status' => 400, 'body' => ['error' => 'Invalid or expired token']];
+        try {
+            \$reset = \$this->db->get('password_resets', '*', ['token' => \$token]);
+
+            if (!\$reset || strtotime(\$reset['expiration']) < time()) {
+                \$this->logger->warning("Reset password failed: invalid or expired token.", [
+                    'token' => \$token,
+                    'ip' => \$_SERVER['REMOTE_ADDR'] ?? 'unknown'
+                ]);
+                return ['status' => 400, 'body' => ['error' => 'invalid_or_expired']];
+            }
+
+            \$this->db->update('users', [
+                'password' => password_hash(\$newPassword, PASSWORD_DEFAULT)
+            ], [
+                'email' => \$reset['email']
+            ]);
+
+            \$this->db->delete('password_resets', ['token' => \$token]);
+
+            return ['status' => 200, 'body' => ['success' => 'password_reset_successful']];
+        } catch (\Throwable \$e) {
+            \$this->logAndNotify("Error in resetPassword.", [
+                'exception' => \$e,
+                'token' => \$token
+            ]);
+            return ['status' => 500, 'body' => ['error' => 'internal_error']];
         }
-
-        \$this->db->update('users', [
-            'password' => password_hash(\$newPassword, PASSWORD_DEFAULT)
-        ], [
-            'email' => \$reset['email']
-        ]);
-
-        \$this->db->delete('password_resets', ['token' => \$token]);
-
-        return ['status' => 200, 'body' => ['success' => 'Password reset successful']];
     }
 
-    public function logout()
+    public function logout(): array
     {
-        // No JWT stateless logout (client discards token)
-        return ['status' => 200, 'body' => ['success' => 'Logout successful']];
+
+        try {
+
+            file_put_contents(
+                __DIR__ . "/logout_debug.log",
+                "Logout method called at " . date('c') . "\n",
+                FILE_APPEND
+            );
+
+            // 1. Extrair o token do header Authorization
+            \$headers = getallheaders();
+            \$authHeader = \$headers['Authorization'] ?? '';
+
+            if (!str_starts_with(\$authHeader, 'Bearer ')) {
+                return ['status' => 401, 'body' => ['error' => 'missing_token']];
+            }
+
+            \$token = trim(substr(\$authHeader, 7));
+            \$tokenHash = hash('sha256', \$token); // usado apenas para log, sem expor JWT
+
+            // Logar token e tokenHash
+            \$this->logger->info("Logout requested.", [
+                'token' => \$token,
+                'token_hash' => \$tokenHash,
+                'ip' => \$_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            ]);
+
+            // 2. Buscar o token no banco para verificar se existe e pegar user_id
+            \$tokenData = \$this->db->get('user_tokens', [
+                'id',
+                'user_id',
+                'revoked'
+            ], [
+                'token_hash' => \$tokenHash
+            ]);
+
+            if (!\$tokenData) {
+                \$this->logger->warning("Logout: token not found.", [
+                    'token_hash' => \$tokenHash,
+                    'ip' => \$_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                ]);
+                return ['status' => 401, 'body' => ['error' => 'token_not_found']];
+            }
+
+            // 3. Se já estiver revogado, loga e responde normalmente
+            if (\$tokenData['revoked'] == 1) {
+                \$this->logger->info("Logout: token was already revoked earlier.", [
+                    'user_id' => \$tokenData['user_id'],
+                    'token_hash' => \$tokenHash
+                ]);
+                return ['status' => 200, 'body' => ['success' => 'already_revoked']];
+            }
+
+            // 4. Atualiza o token como revogado
+            \$revokedAt = (new \DateTime('now', \$this->timezone))->format('Y-m-d H:i:s');
+
+            \$this->db->update('user_tokens', [
+                'revoked' => 1,
+                'revoked_at' => \$revokedAt
+            ], [
+                'id' => \$tokenData['id']
+            ]);
+
+            // 5. Log do logout bem-sucedido
+            \$this->logger->info("Logout completed successfully.", [
+                'user_id' => \$tokenData['user_id'],
+                'token_hash' => \$tokenHash,
+                'revoked_at' => \$revokedAt
+            ]);
+
+            // Limpa o cache do token
+            \$sessionKey = MiddlewareHelper::sanitizeCacheKey('session', \$tokenHash);
+            \$cache = new \Core\Services\CacheService();
+            \$cache->delete(\$sessionKey);
+
+            \$this->logger->info("Session cache invalidated on logout.", [
+                'session_key' => \$sessionKey,
+                'user_id' => \$tokenData['user_id']
+            ]);
+
+
+            return ['status' => 200, 'body' => ['success' => 'logout_successful']];
+        } catch (\Throwable \$e) {
+            \$this->logAndNotify("logout_error", ['exception' => \$e]);
+            return ['status' => 500, 'body' => ['error' => 'internal_error']];
+        }
     }
 }
+
 
 PHP
 );
 out('INFO', 'AuthService created.');
 
-// 5. Criar JWT Middleware
+// 5. Utilitário para envio de e-mails
+file_put_contents(
+    DIR . '/src/Utils/MailHelper.php',
+    <<<PHP
+<?php
+namespace App\Utils;
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use Core\Services\LoggerFactory;
+
+class MailHelper
+{
+    public static function send(\$to, \$subject, \$htmlBody)
+    {
+        \$mail = new PHPMailer(true);
+        \$mail->CharSet = 'UTF-8';
+
+        try {
+            // Config SMTP via .env
+            \$mail->isSMTP();
+            \$mail->Host = \$_ENV['MAIL_HOST'] ?? 'localhost';
+            \$mail->SMTPAuth = true;
+            \$mail->Username = \$_ENV['MAIL_USERNAME'] ?? '';
+            \$mail->Password = \$_ENV['MAIL_PASSWORD'] ?? '';
+            \$mail->Port = \$_ENV['MAIL_PORT'] ?? 587;
+
+            if (\$mail->Port == 465) {
+                \$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            } else {
+                \$mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            }
+
+            \$fromEmail = \$_ENV['MAIL_FROM_ADDRESS'] ?? 'no-reply@localhost';
+            \$fromName = \$_ENV['MAIL_FROM_NAME'] ?? 'App';
+            \$mail->setFrom(\$fromEmail, \$fromName);
+            \$mail->addAddress(\$to);
+
+            \$mail->isHTML(true);
+            \$mail->Subject = \$subject;
+            \$mail->Body = \$htmlBody;
+
+            // Debugging options (só em dev/debug)
+            \$appEnv = \$_ENV['APP_ENV'] ?? 'production';
+            \$appDebug = \$_ENV['APP_DEBUG'] ?? 'false';
+            if (\$appEnv === 'development' || \$appDebug === 'true') {
+                \$mail->SMTPDebug = 2;
+                \$mail->Debugoutput = function (\$str, \$level) {
+                    error_log("SMTP Debug [Level \$level]: \$str");
+                };
+            }
+
+            // ENVIO REAL
+            \$mail->send();
+            return true;
+        } catch (Exception \$e) {
+            \$logger = LoggerFactory::create();
+            \$logger->error('PHPMailer Error', [
+                'to' => \$to,
+                'subject' => \$subject,
+                'mail_error' => \$mail->ErrorInfo,
+                'exception' => \$e->getMessage()
+            ]);
+
+            error_log('Mailer Error: ' . \$mail->ErrorInfo);
+            return false;
+        }
+    }
+}
+
+PHP
+);
+out('INFO', 'JwtAuthMiddleware created.');
+
+// 6. Criar JWT Middleware
 file_put_contents(
     DIR . '/Middleware/JwtAuthMiddleware.php',
     <<<PHP
@@ -298,7 +760,7 @@ class JwtAuthMiddleware
         }
         \$token = trim(str_replace('Bearer ', '', \$authHeader));
         try {
-            \$key = getenv('JWT_SECRET');
+            \$key = \$_ENV('JWT_SECRET');
             \$decoded = JWT::decode(\$token, new Key(\$key, 'HS256'));
             \$_SERVER['user_id'] = \$decoded->sub;
         } catch (\Exception \$e) {
@@ -309,9 +771,79 @@ class JwtAuthMiddleware
 }
 PHP
 );
-out('INFO', 'JwtAuthMiddleware created.');
+out('INFO', 'Utils MailHelper created.');
 
-// 6. Run SQL migration from core/migration/auth-migrations.sql
+// Verifica se o diretório de emails existe
+$templateDir = DIR . '/src/Views/emails';
+
+// Se não existir, cria a pasta (e as intermediárias, se precisar)
+if (!is_dir($templateDir)) {
+    mkdir($templateDir, 0775, true);
+}
+
+// 7. Criar JWT Middleware
+file_put_contents(
+    DIR . '/src/Views/emails/recover-template.php',
+    <<<PHP
+<?php
+/**
+ * Email Template: Password Recovery
+ * Atenção: Não altere as variáveis PHP abaixo.
+ * As variáveis \$name e \$link são obrigatórias e controladas pela camada de serviço.
+ * Modifique apenas o texto ou o layout HTML se quiser personalizar o visual.
+ */
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Password Recovery</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 10px;
+            background-color: #007BFF;
+            color: #FFFFFF;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <p>Hello <?= htmlspecialchars(\$name) ?>,</p>
+
+    <p>We received a request to reset your password.</p>
+
+    <p>Click the button below to choose a new password:</p>
+
+    <p>
+        <a href="<?= htmlspecialchars(\$link) ?>" class="button">Reset Password</a>
+    </p>
+
+    <p>If you prefer, you can also copy and paste this link into your browser:</p>
+    <p><?= htmlspecialchars(\$link) ?></p>
+
+    <p>If you didn’t request this change, you can safely ignore this email. Your account remains secure.</p>
+
+    <div class="footer">
+        This is an automated message. Please do not reply.
+    </div>
+</body>
+</html>
+
+PHP
+);
+out('INFO', 'Utils MailHelper created.');
+
+// 8. Run SQL migration from core/migration/auth-migrations.sql
 $sqlFile = DIR . '/core/Migration/auth-migrations.sql';
 if (file_exists($sqlFile)) {
     $sql = file_get_contents($sqlFile);
@@ -325,8 +857,7 @@ if (file_exists($sqlFile)) {
     out('WARNING', 'auth-migrations.sql not found in core/Migration.', 'yellow');
 }
 
-
-// 7. Adicionar rotas no web.php
+// 9. Adicionar rotas no web.php
 $routeFile = DIR . '/routes/web.php';
 $existingRoutes = file_get_contents($routeFile);
 
@@ -357,7 +888,7 @@ if (!empty($newRoutes)) {
     out('INFO', 'No new routes were added. All auth routes already exist.');
 }
 
-// 8. Adicionar as rotas públicas em public-routes.php
+// 10. Adicionar as rotas públicas em public-routes.php
 $publicRoutesFile = DIR . '/routes/public-routes.php';
 
 // Garante que o arquivo existe (se não existir, cria com array vazio)

@@ -19,5 +19,5 @@ $router->map('POST', '/auth/login', 'App\Controllers\AuthController@login');
 $router->map('POST', '/auth/register', 'App\Controllers\AuthController@register');
 $router->map('POST', '/auth/forgot-password', 'App\Controllers\AuthController@forgotPassword');
 $router->map('POST', '/auth/reset-password', 'App\Controllers\AuthController@resetPassword');
-$router->map('GET', '/auth/reset-password', 'App\\Controllers\\AuthController@resetPassword');
+$router->map('GET', '/auth/reset-password', 'App\Controllers\AuthController@resetPassword');
 $router->map('POST', '/auth/logout', 'App\Controllers\AuthController@logout');

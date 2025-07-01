@@ -1,7 +1,7 @@
 # EchoAPI – Lightweight PHP Microstack for REST APIs
 
-EchoAPI is a minimalist microstack for developers who want to build REST APIs in PHP quickly, with organization and low coupling.
-It works like a backend toolbox — offering only the essentials for routing, database access, validation, authentication, logging, and caching.
+EchoAPI is a minimalist microstack for developers who want to build REST APIs in PHP quickly, with excellent organization and low coupling.
+It works like a backend toolbox — providing only the essentials for routing, database access, validation, authentication, caching, and logging.
 Perfect for those who want to avoid heavy frameworks and focus on a functional, lightweight, and easy-to-maintain API.
 
 It provides built-in support for:
@@ -11,7 +11,8 @@ It provides built-in support for:
 * Validation with Respect\Validation
 * Logging with Monolog
 * API Key Authentication
-* JWT Authentication (Optional)
+* JWT Authentication
+* OAuth 2.0 Authentication (Google, Microsoft, GitHub, Facebook, LinkedIn)
 * Flexible Caching with Symfony Cache (Filesystem, Redis, APCu)
 * Optional Telegram Integration
 
@@ -28,6 +29,8 @@ It provides built-in support for:
 * Symfony Cache (multi-driver caching)
 * vlucas/phpdotenv (environment variables)
 * Firebase PHP-JWT (JWT Authentication)
+* TheNetworg OAuth2 Azure (Microsoft OAuth)
+* League OAuth2 Client (Google, GitHub, Facebook, LinkedIn)
 
 ---
 
@@ -39,13 +42,14 @@ project-root/
 │   ├── api/            # Public entry point for the backend
 │   └── docs/           # Generated OpenAPI documentation
 ├── bootstrap/          # Application initialization
-├── config/             # Environment and database configurations
+├── config/             # Environment and provider configurations
+│   └── oauth_providers.php   # OAuth providers config
 ├── core/               
 │   ├── Helpers/        
 │   ├── Migration/      
 │   ├── OpenApi/        
-│   ├── Scripts/        
-│   ├── Services/       # Core services (Auth, Cache, etc.)
+│   ├── Scripts/        # CLI tools (make, delete, etc.)
+│   ├── Services/       # Core services (Auth, Cache, OAuth)
 │   ├── Utils/          
 │   └── Dispatcher.php  
 ├── storage/     
@@ -82,7 +86,7 @@ composer install
 # Copy the environment file
 cp .env_root .env
 
-# Edit the .env file with your database and cache settings
+# Edit the .env file with your database, cache, and OAuth settings
 
 # Create cache and logs directories
 mkdir -p storage/cache storage/logs
@@ -99,7 +103,7 @@ Standard request flow:
 2. `public/index.php` acts as the entry point
 3. Middlewares (API Key, JWT Auth, etc.) are loaded
 4. The route is resolved
-5. The Controller responds with JSON
+5. The Controller returns JSON
 
 ### Test via terminal:
 
@@ -119,20 +123,7 @@ EchoAPI offers a simple **API Key** authentication system to secure your endpoin
 composer generate:apikey
 ```
 
-> **Note:**
 > When you run this command, EchoAPI generates a random key and writes it to `.env`.
-
-### Using the API Key
-
-Add the **Authorization** header:
-
-```http
-Authorization: Bearer YOUR_API_KEY
-```
-
-If missing or invalid, the API returns HTTP 401 Unauthorized.
-
----
 
 ### Using the API Key
 
@@ -150,8 +141,6 @@ Authorization: Bearer YOUR_API_KEY
 x-api-key: YOUR_API_KEY
 ```
 
-> **Tip:** If both headers are present, `Authorization` takes priority.
-
 If the API Key is missing or invalid, the API returns **HTTP 401 Unauthorized**.
 
 ---
@@ -163,15 +152,13 @@ EchoAPI includes a lightweight JWT authentication system.
 > **Important:**
 > If `JWT_SECRET` is empty, all routes allow public access automatically.
 
----
-
 ### Generate the authentication system
 
 ```bash
 composer make:auth
 ```
 
-Creates Controllers, Services, Middleware (`AuthMiddleware`), and routes.
+This creates Controllers, Services, Middleware (`AuthMiddleware`), and routes.
 
 ---
 
@@ -181,7 +168,7 @@ Creates Controllers, Services, Middleware (`AuthMiddleware`), and routes.
 composer migration:auth
 ```
 
-Creates:
+Creates the following tables:
 
 * `users`
 * `tokens`
@@ -201,40 +188,94 @@ Creates:
 
 ---
 
-## Automated CRUD
+## OAuth 2.0 Authentication
 
-Generate CRUD for any table:
+EchoAPI provides **first-class support for OAuth 2.0 providers** including:
+
+* Google
+* Microsoft Azure
+* GitHub
+* Facebook
+* LinkedIn
+
+You can generate all the configuration automatically:
+
+### Generate OAuth configuration
 
 ```bash
-composer make:crud users
+composer make:oauth google github
 ```
 
-Creates:
+This command:
 
-* Model
-* Service
-* Controller
-* Routes
+✅ Installs the necessary Composer packages
+✅ Creates or updates `config/oauth_providers.php`
+✅ Creates `src/Services/OAuthService.php` if not present
+
+> **Tip:** You can list multiple providers in the same command.
+
+Example usage:
+
+```bash
+composer make:oauth google linkedin microsoft
+```
+
+### Remove OAuth configuration
+
+```bash
+composer delete:oauth github
+```
+
+If the `oauth_providers.php` becomes empty, EchoAPI will automatically delete both the config file and the `OAuthService` class.
+
+---
+
+### Example usage in your code
+
+```php
+$oauth = new \App\Services\OAuthService();
+$provider = $oauth->getProvider('google');
+```
+
+From here you can:
+
+* Generate the authorization URL:
+
+  ```php
+  $authUrl = $provider->getAuthorizationUrl();
+  ```
+* Exchange authorization code for token:
+
+  ```php
+  $token = $provider->getAccessToken('authorization_code', [
+      'code' => $_GET['code']
+  ]);
+  ```
+* Retrieve user details:
+
+  ```php
+  $user = $provider->getResourceOwner($token);
+  ```
 
 ---
 
 ## Caching
 
-EchoAPI includes a **unified CacheService** built on Symfony Cache, with support for:
+EchoAPI includes a **unified CacheService** based on Symfony Cache, with support for:
 
-* Filesystem (default, always works)
-* Redis (high-performance)
-* APCu (in-memory local)
+* Filesystem (default)
+* Redis (recommended for distributed environments)
+* APCu (in-memory)
 
-Caching is used transparently for features like:
+Caching is used transparently for:
 
-* **IP blocking after repeated invalid authentication attempts**
-* **Rate limiting (if you implement)**
-* **Application-level cache**
+* IP blocking after repeated authentication failures
+* Rate limiting (if implemented)
+* Application-level data caching
 
 ---
 
-### Configuration
+### Cache Configuration
 
 In `.env`:
 
@@ -252,49 +293,9 @@ If Redis or APCu is unavailable, Filesystem fallback is automatic.
 
 ---
 
-### Usage Example
-
-```php
-$cache = new \App\Services\CacheService();
-
-// Store a value for 5 minutes
-$cache->set('key', 'value', 300);
-
-// Retrieve a value
-$data = $cache->get('key');
-
-// Increment a numeric value
-$cache->increment('login_attempts_127.0.0.1', 600);
-
-// Check if a key exists
-if ($cache->has('key')) {
-    // Do something
-}
-
-// Delete a key
-$cache->delete('key');
-
-// Clear all entries (be careful!)
-$cache->clear();
-```
-
----
-
-## IP Blocking and Rate Limiting
-
-The **AuthService** uses `CacheService` to:
-
-* Count failed login attempts (`increment()`).
-* Block IPs after exceeding `MAX_INVALID_ATTEMPTS` for `IP_BLOCK_DURATION` seconds.
-* Automatically clear expired blocks.
-
-This makes brute-force protection simple and efficient across multiple servers (when using Redis).
-
----
-
 ## Swagger Documentation
 
-Generate OpenAPI spec:
+Generate the OpenAPI specification:
 
 ```bash
 composer swagger:build
@@ -306,11 +307,13 @@ Creates:
 app/docs/openapi.json
 ```
 
+You can view it in Swagger Editor or Swagger UI.
+
 ---
 
 ## Telegram Integration
 
-Configure `.env`:
+To receive error notifications in Telegram, configure `.env`:
 
 ```ini
 TELEGRAM_BOT_TOKEN=your_token
@@ -318,7 +321,7 @@ TELEGRAM_CHAT_ID=your_chat_id
 ERROR_NOTIFY_CATEGORIES=critical,error,alert
 ```
 
-Use:
+Test the integration:
 
 ```bash
 composer telegram:test
@@ -328,20 +331,22 @@ composer telegram:test
 
 ## Available Scripts
 
-| Command           | Description                                    |
-| ----------------- | ---------------------------------------------- |
-| `make:module`     | Generate a module (Controller, Service, Model) |
-| `delete:module`   | Remove a module                                |
-| `make:crud`       | Generate CRUD from a table                     |
-| `delete:crud`     | Remove CRUD files                              |
-| `list:crud`       | List existing CRUDs                            |
-| `make:auth`       | Generate JWT authentication                    |
-| `migration:auth`  | Run migrations for auth                        |
-| `delete:auth`     | Remove authentication files                    |
-| `generate:apikey` | Create an API Key                              |
-| `log:test`        | Generate example logs                          |
-| `telegram:test`   | Send test message to Telegram                  |
-| `swagger:build`   | Generate OpenAPI documentation                 |
+| Command           | Description                                            |
+| ----------------- | ------------------------------------------------------ |
+| `make:module`     | Generate a module (Controller, Service, Model)         |
+| `delete:module`   | Remove a module                                        |
+| `make:crud`       | Generate CRUD from a table                             |
+| `delete:crud`     | Remove CRUD files                                      |
+| `list:crud`       | List existing CRUDs                                    |
+| `make:auth`       | Generate JWT authentication system                     |
+| `delete:auth`     | Remove authentication files                            |
+| `migration:auth`  | Run database migrations for authentication             |
+| `make:oauth`      | Generate OAuth configuration and install packages      |
+| `delete:oauth`    | Remove OAuth configuration and clean up files if empty |
+| `generate:apikey` | Create an API Key                                      |
+| `log:test`        | Generate example logs                                  |
+| `telegram:test`   | Send test message to Telegram                          |
+| `swagger:build`   | Generate OpenAPI documentation                         |
 
 ---
 

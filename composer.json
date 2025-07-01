@@ -29,7 +29,10 @@
         "phpmailer/phpmailer": "^6.10",
         "firebase/php-jwt": "^6.11",
         "symfony/cache": "^7.3",
-        "predis/predis": "^3.0"
+        "predis/predis": "^3.0",
+        "thenetworg/oauth2-azure": "^2.2",
+        "league/oauth2-google": "^4.0",
+        "league/oauth2-linkedin": "^5.1"
     },
     "scripts": {
         "log:test": "php core/Scripts/log-test.php",
@@ -42,6 +45,8 @@
         "delete:crud": "php core/Scripts/delete-crud.php",
         "make:auth": "php core/Scripts/make-auth.php",
         "delete:auth": "php core/Scripts/delete-auth.php",
+        "make:oauth": "php core/Scripts/make-oauth.php",
+        "delete:oauth": "php core/Scripts/delete-oauth.php",
         "swagger:build": "vendor/bin/openapi --bootstrap core/OpenApi/bootstrap-swagger.php --output app/docs/openapi.json src/"
     },
     "minimum-stability": "stable",

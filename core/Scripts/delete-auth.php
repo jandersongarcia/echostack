@@ -37,7 +37,6 @@ $filesToDelete = [
     DIR . '/src/Controllers/AuthController.php',
     DIR . '/src/Services/AuthService.php',
     DIR . '/Middleware/JwtAuthMiddleware.php',
-    DIR . '/src/Utils/MailHelper.php',
     DIR . '/src/Views/emails/recover-template.php',
 ];
 

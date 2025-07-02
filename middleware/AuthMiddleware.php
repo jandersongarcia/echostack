@@ -101,7 +101,7 @@ class AuthMiddleware
         ]);
 
         if (stripos($authHeader, 'Bearer ') !== 0) {
-            $this->incrementInvalidAttempt($ip, $authHeader);
+            $this->incrementInvalidAttempt($ip, $authHeader, 'error');
         }
 
         $token = trim(substr($authHeader, 7));
@@ -116,7 +116,7 @@ class AuthMiddleware
         } else {
             $usuario = $this->fetchUserByToken($tokenHash);
             if (!$usuario) {
-                $this->incrementInvalidAttempt($ip, $authHeader);
+                $this->incrementInvalidAttempt($ip, $authHeader, 'error');
             }
             $this->cache->set($sessionKey, $usuario, 7200);
         }

@@ -72,12 +72,19 @@ $options = [
 ];
 
 $context = stream_context_create($options);
-$result = @file_get_contents($url, false, $context);
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+$result = curl_exec($ch);
 
 if ($result === false) {
-    echo "❌ Failed to contact Telegram API. Check your internet connection or firewall.\n";
+    echo "❌ cURL error: " . curl_error($ch) . "\n";
     exit(4);
 }
+curl_close($ch);
 
 $response = json_decode($result, true);
 

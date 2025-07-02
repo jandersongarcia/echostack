@@ -26,26 +26,24 @@ class TelegramNotifier
             'parse_mode' => 'Markdown'
         ];
 
-        $options = [
-            'http' => [
-                'header'        => "Content-Type: application/x-www-form-urlencoded\r\n",
-                'method'        => 'POST',
-                'content'       => http_build_query($data),
-                'timeout'       => 5,
-                'ignore_errors' => true, // permite capturar erro de resposta HTTP
-            ],
-        ];
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
 
-        $context = stream_context_create($options);
-        $result = @file_get_contents($url, false, $context);
+        $result = curl_exec($ch);
 
         if ($result === false) {
-            $error = error_get_last();
-            $this->writeToLog("❌ TelegramNotifier failed: {$error['message']} in {$error['file']} on line {$error['line']}");
+            $error = curl_error($ch);
+            $this->writeToLog("❌ TelegramNotifier cURL error: {$error}");
+            curl_close($ch);
             return;
         }
 
         $response = json_decode($result, true);
+        curl_close($ch);
+
         if (!($response['ok'] ?? false)) {
             $description = $response['description'] ?? 'Unknown error';
             $this->writeToLog("❌ Telegram API Error: {$description}");

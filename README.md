@@ -230,6 +230,36 @@ Below are the default endpoints automatically registered for each provider:
 
 ---
 
+### Important
+
+Before using OAuth, you **must configure** the credentials in the file:
+
+```
+config/oauth_providers.php
+```
+
+Example configuration for Azure:
+
+```php
+<?php
+
+return [
+    'azure' => [
+        'class' => '\\TheNetworg\\OAuth2\\Client\\Provider\\Azure',
+        'env' => [
+            'clientId'     => 'YOUR_AZURE_CLIENT_ID',
+            'clientSecret' => 'YOUR_AZURE_CLIENT_SECRET',
+            'redirectUri'  => 'YOUR_AZURE_REDIRECT_URI',
+            'tenant'       => 'YOUR_AZURE_TENANT_ID',
+        ],
+    ],
+];
+```
+
+✅ **Make sure to replace** all placeholder values (`YOUR_AZURE_CLIENT_ID`, etc.) with your actual credentials.
+
+---
+
 ### Removing a Provider
 
 To remove an OAuth provider configuration:

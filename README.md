@@ -183,13 +183,17 @@ This command generates:
 
 ---
 
-## OAuth 2.0 Authentication
+## OAuth 2.0 – Plug & Play Authentication
 
 EchoAPI offers **first-class support for OAuth 2.0 providers**, including:
 
+* Facebook
+* Github
 * Google
 * Microsoft Azure
 * LinkedIn
+
+---
 
 ### Generate OAuth Configuration
 
@@ -197,13 +201,38 @@ EchoAPI offers **first-class support for OAuth 2.0 providers**, including:
 composer make:oauth google linkedin azure
 ```
 
-This command:
+This command will:
 
-✅ Ensures the necessary packages are installed
-✅ Creates or updates `config/oauth_providers.php`
-✅ Generates `src/Services/OAuthService.php`
+* Install all required packages
+* Create or update `config/oauth_providers.php`
+* Generate `src/Services/OAuthService.php`
 
-**To remove a provider:**
+---
+
+### Default OAuth Endpoints
+
+Below are the default endpoints automatically registered for each provider:
+
+| Method | Endpoint                | Purpose                                |
+| ------ | ----------------------- | -------------------------------------- |
+| POST   | `/v1/facebook/redirect` | Redirect user to Facebook login        |
+| POST   | `/v1/facebook/callback` | Handle Facebook callback               |
+| POST   | `/v1/github/redirect`   | Redirect user to GitHub login          |
+| POST   | `/v1/github/callback`   | Handle GitHub callback                 |
+| POST   | `/v1/google/redirect`   | Redirect user to Google login          |
+| POST   | `/v1/google/callback`   | Handle Google callback                 |
+| POST   | `/v1/linkedin/redirect` | Redirect user to LinkedIn login        |
+| POST   | `/v1/linkedin/callback` | Handle LinkedIn callback               |
+| POST   | `/v1/azure/redirect`    | Redirect user to Microsoft Azure login |
+| POST   | `/v1/azure/callback`    | Handle Microsoft Azure callback        |
+
+> **Note:** The `:provider` segment refers to the OAuth provider slug (e.g., `google`, `linkedin`, `azure`).
+
+---
+
+### Removing a Provider
+
+To remove an OAuth provider configuration:
 
 ```bash
 composer delete:oauth linkedin
@@ -214,18 +243,21 @@ composer delete:oauth linkedin
 ### Example Usage
 
 ```php
+// Initialize the OAuth service
 $oauth = new \App\Services\OAuthService();
+
+// Load the Google provider
 $provider = $oauth->getProvider('google');
 
-// Generate the authorization URL
+// Generate the authorization URL to redirect the user
 $authUrl = $provider->getAuthorizationUrl();
 
-// Exchange the authorization code for a token
+// Exchange the authorization code for an access token
 $token = $provider->getAccessToken('authorization_code', [
     'code' => $_GET['code']
 ]);
 
-// Retrieve the user details
+// Retrieve the authenticated user details
 $user = $provider->getResourceOwner($token);
 ```
 

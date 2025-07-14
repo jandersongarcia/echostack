@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Monolog\Logger;
 
 /**
- * @OA\PathItem(path="/")
+ * @OA\PathItem(path="/v1/health")
  * @OA\Tag(name="System", description="System endpoints")
  */
 class HealthController
@@ -23,19 +23,17 @@ class HealthController
 
     /**
      * @OA\Get(
-     *     path="/",
-     *     summary="Health check",
+     *     path="/v1/health",
+     *     summary="System health check",
      *     tags={"System"},
      *     @OA\Response(
      *         response=200,
-     *         description="API status check",
+     *         description="Returns the current status of the API subsystems",
      *         @OA\JsonContent(
      *             example={
-     *                 "pong": true,
-     *                 "database": "ok",
-     *                 "filesystem": "ok",
-     *                 "telegram": "configured",
-     *                 "version": "2.0.0"
+     *                 "database": "connected",
+     *                 "logs": "ok",
+     *                 "telegram": "configured"
      *             }
      *         )
      *     )
@@ -43,31 +41,36 @@ class HealthController
      */
     public function check(): JsonResponse
     {
-        $health = [
-            'pong' => true,
+        return new JsonResponse([
+            'version' => $this->getVersion(),
             'database' => $this->checkDatabase(),
-            'filesystem' => $this->checkFilesystem(),
+            'logs' => $this->checkLogsDirectory(),
             'telegram' => $this->checkTelegram(),
-            'version' => $this->getVersion()
-        ];
-
-        return new JsonResponse($health);
+        ]);
     }
 
     private function checkDatabase(): string
     {
         try {
             $this->db->query('SELECT 1');
-            return 'ok';
+            return 'connected';
         } catch (\Throwable $e) {
             $this->logger->error('Database check failed', ['message' => $e->getMessage()]);
             return 'fail';
         }
     }
 
-    private function checkFilesystem(): string
+    private function checkLogsDirectory(): string
     {
-        return is_writable(__DIR__ . '/../../storage/logs') ? 'ok' : 'fail';
+        $logDir = realpath(__DIR__ . '/../../storage/logs');
+
+        if (!$logDir || !is_writable($logDir)) {
+            return 'fail';
+        }
+
+        $files = glob($logDir . '/*.log');
+
+        return (!empty($files)) ? 'ok' : 'warn_empty';
     }
 
     private function checkTelegram(): string
@@ -80,7 +83,7 @@ class HealthController
 
     private function getVersion(): string
     {
-        $versionConfig = require __DIR__ . '/../../config/version.php';
-        return $versionConfig['version'] ?? 'unknown';
+        $composer = json_decode(file_get_contents(__DIR__ . '/../../composer.json'), true);
+        return $composer['extra']['echoapi-version'] ?? 'unknown';
     }
 }

@@ -29,8 +29,8 @@ class AuthMiddleware
     }
 
     /**
-     * Handle authentication and rate limiting
-     * @param array|null $matchParams (pass $match['params'] after router->match())
+     * Handles authentication, rate limiting, and access control.
+     * @param array|null $matchParams Parameters from route matching (optional)
      */
     public function handle(?array $matchParams = null): void
     {
@@ -41,7 +41,17 @@ class AuthMiddleware
 
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-        // Rota OAuth: apenas validar provider e pular o restante
+        // Bypass: health check route
+        if ($uri === '/v1/health') {
+            $this->logger->info("AuthMiddleware: Health check bypassed.", [
+                'uri' => $uri,
+                'ip' => $ip,
+                'user_agent' => $userAgent
+            ]);
+            return;
+        }
+
+        // Bypass: OAuth route
         if (strpos($uri, '/v1/oauth') === 0) {
             if ($matchParams !== null) {
                 \Middleware\ValidateOAuthProvider::handle($matchParams);
@@ -54,7 +64,7 @@ class AuthMiddleware
             return;
         }
 
-        // Se não houver JWT_SECRET, API é pública (sem autenticação)
+        // Public API (no auth) if JWT_SECRET is empty
         if (empty($jwtSecret)) {
             $this->logger->info("AuthMiddleware: Public access allowed (JWT_SECRET is empty).", [
                 'ip' => $ip,
@@ -63,33 +73,33 @@ class AuthMiddleware
             return;
         }
 
-        // Rate limiting por IP
+        // Rate limiting per IP
         $rateKey = MiddlewareHelper::sanitizeCacheKey("ratelimit", $ip);
         $rateCount = $this->cache->increment($rateKey, $this->rateLimitDuration);
         if ($rateCount > $this->rateLimit) {
             $this->reject(429, 'rate_limit_exceeded', "Rate limit exceeded.", ['count' => $rateCount]);
         }
 
-        // Bloqueio de IP após excesso de tentativas inválidas
+        // IP blocking
         $blockedKey = MiddlewareHelper::sanitizeCacheKey("blocked_ip", $ip);
         if ($this->cache->get($blockedKey)) {
-            $this->reject(403, 'ip_blocked', "IP blocked.");
+            $this->reject(403, 'ip_blocked', "Access blocked due to previous invalid attempts.");
         }
 
-        // Coleta headers
+        // Headers
         $headers = getallheaders();
         $authHeader = $headers['Authorization'] ?? '';
         $clientApiKey = $headers['x-api-key']
             ?? $_SERVER['HTTP_X_API_KEY']
             ?? null;
 
-        // Verifica presença de x-api-key e JWT_SECRET
+        // Ensure required headers are present
         $this->assertRequired([
             'x-api-key' => $clientApiKey,
             'JWT_SECRET' => $jwtSecret,
         ]);
 
-        // Rotas públicas (exigem só x-api-key)
+        // Handle public routes (only API key required)
         $cleanUri = preg_replace('#^/v\d+(/|$)#', '/', $uri);
         $publicRoutes = require __DIR__ . '/../routes/public-routes.php';
 
@@ -99,7 +109,7 @@ class AuthMiddleware
                     'provided_api_key' => $clientApiKey
                 ]);
             }
-            $this->logger->info("AuthMiddleware: Public route accessed.", [
+            $this->logger->info("AuthMiddleware: Public route access granted.", [
                 'uri' => $uri,
                 'ip' => $ip,
                 'user_agent' => $userAgent
@@ -107,14 +117,14 @@ class AuthMiddleware
             return;
         }
 
-        // x-api-key inválida
+        // Validate x-api-key
         if ($clientApiKey !== $jwtSecret) {
             $this->reject(403, 'invalid_api_key', "Invalid x-api-key.", [
                 'provided_api_key' => $clientApiKey
             ]);
         }
 
-        // Verifica Authorization header
+        // Validate Authorization header
         $this->assertRequired([
             'Authorization' => $authHeader,
         ]);
@@ -127,24 +137,24 @@ class AuthMiddleware
         $tokenHash = hash('sha256', $token);
         $sessionKey = MiddlewareHelper::sanitizeCacheKey("session", $tokenHash);
 
-        // Tenta recuperar sessão do cache
+        // Fetch user from cache or DB
         $userCache = $this->cache->get($sessionKey);
 
         if ($userCache) {
-            $usuario = $userCache;
+            $user = $userCache;
         } else {
-            $usuario = $this->fetchUserByToken($tokenHash);
-            if (!$usuario) {
+            $user = $this->fetchUserByToken($tokenHash);
+            if (!$user) {
                 $this->incrementInvalidAttempt($ip, $authHeader, $uri);
             }
-            $this->cache->set($sessionKey, $usuario, 7200);
+            $this->cache->set($sessionKey, $user, 7200);
         }
 
-        $_SERVER['AUTH_USER'] = $usuario;
+        $_SERVER['AUTH_USER'] = $user;
 
         $this->logger->info("AuthMiddleware: Authentication successful.", [
-            'user_id' => $usuario['id'],
-            'user_email' => $usuario['email'],
+            'user_id' => $user['id'],
+            'user_email' => $user['email'],
             'ip' => $ip,
             'user_agent' => $userAgent
         ]);
@@ -152,9 +162,8 @@ class AuthMiddleware
 
     private function incrementInvalidAttempt(string $ip, string $authHeader, string $uri): void
     {
-        // Não contar tentativas inválidas no logout
         if ($uri === '/auth/logout') {
-            $this->reject(401, 'token_invalid_or_revoked', "Invalid token on logout.");
+            $this->reject(401, 'token_invalid_or_revoked', "Invalid token during logout.");
         }
 
         $attemptKey = MiddlewareHelper::sanitizeCacheKey("attempts", $ip);
@@ -163,7 +172,7 @@ class AuthMiddleware
         if ($attempts >= $this->maxAttempts) {
             $blockedKey = MiddlewareHelper::sanitizeCacheKey("blocked_ip", $ip);
             $this->cache->set($blockedKey, true, $this->blockDuration);
-            $this->reject(403, 'ip_blocked', "IP blocked after max attempts.", [
+            $this->reject(403, 'ip_blocked', "IP blocked after too many invalid attempts.", [
                 'attempts' => $attempts
             ]);
         }
@@ -208,7 +217,7 @@ class AuthMiddleware
     {
         foreach ($values as $key => $value) {
             if ($value === null || trim((string) $value) === '') {
-                $this->reject(400, 'missing_' . strtolower($key), "Missing or empty: {$key}");
+                $this->reject(400, 'missing_' . strtolower($key), "Missing or empty header: {$key}");
             }
         }
     }

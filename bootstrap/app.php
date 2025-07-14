@@ -34,6 +34,31 @@ $config = require __DIR__ . '/../config/config.php';
 $database = new Medoo($config['db']);
 
 // ==========================
+// AUTOMATIC MIGRATION (dev)
+// ==========================
+
+$shouldMigrate = isset($_ENV['AUTO_MIGRATE']) && $_ENV['AUTO_MIGRATE'] === 'true';
+$tableExists = $database->query("SHOW TABLES LIKE 'users'")->fetch();
+
+if ($shouldMigrate && !$tableExists) {
+    $migrationFile = __DIR__ . '/../core/migrations/auth-migrations.sql';
+
+    if (file_exists($migrationFile)) {
+        try {
+            $sql = file_get_contents($migrationFile);
+            $database->pdo->exec($sql);
+            error_log("[EchoAPI] Database initialized using 'auth-migrations.sql'.");
+        } catch (PDOException $e) {
+            error_log("[EchoAPI] Failed to execute migration: " . $e->getMessage());
+        }
+    } else {
+        error_log("[EchoAPI] Database initialized using 'auth-migrations.sql'.");
+        echo "[EchoAPI] Database initialized using 'auth-migrations.sql'.\n";
+    }
+}
+
+
+// ==========================
 // LOGGER
 // ==========================
 

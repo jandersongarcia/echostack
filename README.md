@@ -1,6 +1,11 @@
+
+<p align="center">
+  <img src="app/assets/logo-echoapi.png" alt="EchoAPI logo" width="200"/>
+</p>
+
 # EchoAPI – Lightweight PHP Microstack for REST APIs
 
-**EchoAPI** is a minimalist microstack designed for developers who want to build RESTful APIs in PHP with speed, clean structure, and low coupling.
+**EchoAPI** is a minimalist microstack designed for developers who want to build RESTful APIs in PHP with speed, clean structure, and low coupling.  
 Rather than being a full-stack framework, EchoAPI acts as a backend toolbox — delivering only the essential components needed for routing, validation, authentication, caching, logging, and external integrations.
 
 Ideal for developers seeking a functional, lightweight, and maintainable API architecture without the overhead of complex frameworks.
@@ -14,7 +19,6 @@ Ideal for developers seeking a functional, lightweight, and maintainable API arc
 * Data validation with **Respect\Validation**
 * Structured logging via **Monolog**
 * Multiple authentication layers:
-
   * API Key
   * JWT (JSON Web Tokens)
   * OAuth 2.0 (Google, Microsoft, LinkedIn, etc.)
@@ -76,11 +80,63 @@ project-root/
 ├── .env                 # Environment variables
 ├── composer.json
 └── README.md
-```
+````
 
 ---
 
-## 🚀 Installation
+## 📦 Running with Docker
+
+EchoAPI includes a ready-to-use Docker setup to simplify development and ensure consistency across environments.
+
+### Requirements
+
+* [Docker Desktop](https://www.docker.com/products/docker-desktop)
+* `docker compose` installed (usually included with Docker)
+
+### 1. Build and Start the Containers
+
+```bash
+docker compose up --build -d
+```
+
+Access the API at: [http://localhost:8080](http://localhost:8080)
+
+> The container runs PHP 8.3 + Apache, MySQL 8, and Redis.
+
+### 2. Install Dependencies Inside the Container
+
+```bash
+docker compose exec app composer install
+```
+
+### 3. Create Storage Folders (if not present)
+
+```bash
+mkdir -p storage/cache storage/logs
+chmod -R 775 storage
+```
+
+### 4. Configure Your `.env` File
+
+Make sure your `.env` matches the container environment:
+
+```ini
+DB_HOST=db
+DB_PORT=3306
+DB_NAME=echoapi
+DB_USER=root
+DB_PASS=root
+
+CACHE_DRIVER=redis
+REDIS_HOST=redis
+```
+
+Test the health endpoint:
+[http://localhost:8080/v1/health](http://localhost:8080/v1/health)
+
+---
+
+## 🚀 Manual Installation
 
 ```bash
 git clone https://github.com/jandersongarcia/EchoAPI.git
@@ -97,11 +153,11 @@ Edit `.env` with your database, cache, and Telegram settings.
 
 ## 🔄 Request Flow
 
-1. Request hits `public/index.php` (front controller)
+1. Request hits `index.php` (entry point)
 2. Middlewares are applied (Auth, CORS, etc.)
 3. Routing is resolved via AltoRouter
 4. Controller is executed
-5. Response is returned in JSON format
+5. JSON response is returned
 
 ---
 
@@ -282,3 +338,5 @@ composer log:test
 
 **MIT License**
 Developed by [Janderson Garcia](https://github.com/jandersongarcia)
+
+```

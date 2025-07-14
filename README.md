@@ -1,268 +1,162 @@
 # EchoAPI – Lightweight PHP Microstack for REST APIs
 
-EchoAPI is a minimalist microstack for developers who want to build REST APIs in PHP quickly, with excellent organization and low coupling.
-It works like a backend toolbox — providing only the essentials for routing, database access, validation, authentication, email delivery, caching, and logging.
-Perfect for anyone who wants to avoid heavy frameworks and focus on a functional, lightweight, and easy-to-maintain API.
+**EchoAPI** is a minimalist microstack designed for developers who want to build RESTful APIs in PHP with speed, clean structure, and low coupling.
+Rather than being a full-stack framework, EchoAPI acts as a backend toolbox — delivering only the essential components needed for routing, validation, authentication, caching, logging, and external integrations.
 
-It includes built-in support for:
-
-✅ Routing with AltoRouter
-✅ Lightweight ORM with Medoo
-✅ Validation with Respect\Validation
-✅ Logging with Monolog
-✅ API Key Authentication
-✅ JWT Authentication
-✅ OAuth 2.0 Authentication (Google, Microsoft Azure, LinkedIn)
-✅ Flexible Caching with Symfony Cache (Filesystem, Redis, APCu)
-✅ Email delivery via PHPMailer
-✅ Optional Telegram integration
+Ideal for developers seeking a functional, lightweight, and maintainable API architecture without the overhead of complex frameworks.
 
 ---
 
-## Technologies Used
+## ✅ Key Features
 
-* PHP 8.x
+* Routing with **AltoRouter**
+* Lightweight ORM using **Medoo**
+* Data validation with **Respect\Validation**
+* Structured logging via **Monolog**
+* Multiple authentication layers:
+
+  * API Key
+  * JWT (JSON Web Tokens)
+  * OAuth 2.0 (Google, Microsoft, LinkedIn, etc.)
+* Flexible caching via **Symfony Cache** (Filesystem, Redis, APCu)
+* Native email support with **PHPMailer**
+* Real-time error alerts through **Telegram**
+
+---
+
+## 🛠️ Technologies Used
+
+* **PHP 8.x**
 * Medoo (PDO wrapper)
-* AltoRouter (routing)
-* Monolog (logging)
-* Respect\Validation (validation)
+* AltoRouter (Routing)
+* Monolog (Logging)
+* Respect\Validation (Validation)
 * Symfony Console (CLI scripts)
-* Symfony Cache (multi-driver caching)
-* Predis (Redis client)
+* Symfony Cache (Multi-driver caching)
+* Predis (Redis integration)
 * PHPMailer (SMTP email)
-* Firebase PHP-JWT (JWT authentication)
-* TheNetworg OAuth2 Azure
+* Firebase PHP-JWT (JWT support)
+* TheNetworg OAuth2 Azure (Azure AD)
 * League OAuth2 Client (Google, LinkedIn)
-* vlucas/phpdotenv (environment variables)
+* vlucas/phpdotenv (Environment config)
 
 ---
 
-## Directory Structure
+## 📁 Project Structure
 
 ```txt
 project-root/
 ├── app/
-│   └── docs/            # Generated OpenAPI documentation
-├── bootstrap/           # Application initialization
+│   └── docs/            # Generated Swagger/OpenAPI documentation
+├── bootstrap/           # Application bootstrap
 ├── config/
-│   ├── oauth_providers.php   # OAuth providers configuration
-│   └── php_mailer.php        # SMTP settings for PHPMailer
+│   ├── oauth_providers.php   # OAuth credentials
+│   └── php_mailer.php        # PHPMailer SMTP settings
 ├── core/
 │   ├── Helpers/
 │   ├── Migration/
 │   ├── OpenApi/
-│   ├── Scripts/         # CLI tools (make, delete, etc.)
-│   ├── Services/        # Core services (Auth, Cache, OAuth)
-│   ├── Utils/           # Utilities (MailHelper, etc.)
+│   ├── Scripts/         # CLI tools
+│   ├── Services/        # Core services (Auth, Cache, OAuth, etc.)
+│   ├── Utils/           # Shared utilities
 │   └── Dispatcher.php
 ├── storage/
-│   ├── cache/           # Filesystem cache storage
-│   └── logs/            # Application logs
-├── middleware/
-├── routes/
-├── src/
+│   ├── cache/           # Cache files
+│   └── logs/            # Rotated logs
+├── middleware/          # Custom middleware
+├── routes/              # Route definitions
+├── src/                 # Application source code
 │   ├── Controllers/
 │   ├── Docs/
 │   ├── Models/
 │   ├── Services/
 │   ├── Utils/
 │   ├── Validators/
-│   └── Views/
-│       └── emails/
-├── .env
+│   └── Views/emails/    # Email templates
+├── .env                 # Environment variables
 ├── composer.json
 └── README.md
 ```
 
 ---
 
-## Installation
+## 🚀 Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/jandersongarcia/EchoAPI.git
 cd EchoAPI
-
-# Install dependencies
 composer install
-
-# Copy the environment file
 cp .env_root .env
-
-# Edit the .env file with your database, cache, and Telegram settings
-
-# Create cache and logs directories
 mkdir -p storage/cache storage/logs
 chmod -R 775 storage
 ```
 
----
-
-## Running an Endpoint
-
-Standard request flow:
-
-1. The client sends a request (e.g., `GET /v1/health`)
-2. `public/index.php` acts as the entry point
-3. Middlewares are loaded (API Key, JWT Auth, etc.)
-4. The route is resolved
-5. The Controller returns JSON
-
-### Quick Test
-
-```bash
-curl http://localhost:8080/v1/health
-```
+Edit `.env` with your database, cache, and Telegram settings.
 
 ---
 
-## API Key Authentication
+## 🔄 Request Flow
 
-EchoAPI provides a simple **API Key authentication** system to protect your endpoints without requiring OAuth complexity.
+1. Request hits `public/index.php` (front controller)
+2. Middlewares are applied (Auth, CORS, etc.)
+3. Routing is resolved via AltoRouter
+4. Controller is executed
+5. Response is returned in JSON format
 
-### Generate a New API Key
+---
+
+## 🔐 Authentication
+
+### API Key
+
+* Add your key to `.env` → `API_KEY=...`
+* Send via header:
+
+  * `Authorization: Bearer ...` or
+  * `x-api-key: ...`
+* Returns `401` if missing or invalid
+
+Generate:
 
 ```bash
 composer generate:key
 ```
 
-This command generates a random key and writes it to `.env` (`API_KEY`).
-
-### How to Use the API Key
-
-You can send the API key in two ways:
-
-**Authorization header:**
-
-```http
-Authorization: Bearer YOUR_API_KEY
-```
-
-**or**
-
-**x-api-key header:**
-
-```http
-x-api-key: YOUR_API_KEY
-```
-
-If the API key is missing or invalid, the API responds with **HTTP 401 Unauthorized**.
-
 ---
 
-## JWT Authentication
+### JWT (JSON Web Token)
 
-EchoAPI includes a lightweight JWT authentication system.
-
-> **Note:** If `JWT_SECRET` is empty in `.env`, all routes will allow public access by default.
-
-### Generate the Authentication System
+Generate system:
 
 ```bash
 composer make:auth
 ```
 
-This command generates:
+Default endpoints:
 
-* Controllers
-* Services
-* Middleware (`AuthMiddleware`)
-* Routes
-
----
-
-### Default JWT Endpoints
-
-| Method | Endpoint          | Purpose                   |
-| ------ | ----------------- | ------------------------- |
-| POST   | /v1/auth/login    | Login with email/password |
-| POST   | /v1/auth/register | User registration         |
-| POST   | /v1/auth/recover  | Request password reset    |
-| POST   | /v1/auth/reset    | Reset password            |
-| POST   | /v1/auth/logout   | Log out the user          |
+| Method | Endpoint          | Purpose          |
+| ------ | ----------------- | ---------------- |
+| POST   | /v1/auth/login    | Login user       |
+| POST   | /v1/auth/register | Create new user  |
+| POST   | /v1/auth/recover  | Request password |
+| POST   | /v1/auth/reset    | Reset password   |
+| POST   | /v1/auth/logout   | Logout user      |
 
 ---
 
-## OAuth 2.0 – Plug & Play Authentication
+### OAuth 2.0 Providers
 
-EchoAPI offers **first-class support for OAuth 2.0 providers**, including:
-
-* Facebook
-* Github
-* Google
-* Microsoft Azure
-* LinkedIn
-
----
-
-### Generate OAuth Configuration
+Generate config:
 
 ```bash
 composer make:oauth google linkedin azure
 ```
 
-This command will:
+Supported providers: Google, LinkedIn, Microsoft Azure, Facebook, GitHub
 
-* Install all required packages
-* Create or update `config/oauth_providers.php`
-* Generate `src/Services/OAuthService.php`
+Configure credentials in `config/oauth_providers.php`
 
----
-
-### Default OAuth Endpoints
-
-Below are the default endpoints automatically registered for each provider:
-
-| Method | Endpoint                | Purpose                                |
-| ------ | ----------------------- | -------------------------------------- |
-| POST   | `/v1/facebook/redirect` | Redirect user to Facebook login        |
-| POST   | `/v1/facebook/callback` | Handle Facebook callback               |
-| POST   | `/v1/github/redirect`   | Redirect user to GitHub login          |
-| POST   | `/v1/github/callback`   | Handle GitHub callback                 |
-| POST   | `/v1/google/redirect`   | Redirect user to Google login          |
-| POST   | `/v1/google/callback`   | Handle Google callback                 |
-| POST   | `/v1/linkedin/redirect` | Redirect user to LinkedIn login        |
-| POST   | `/v1/linkedin/callback` | Handle LinkedIn callback               |
-| POST   | `/v1/azure/redirect`    | Redirect user to Microsoft Azure login |
-| POST   | `/v1/azure/callback`    | Handle Microsoft Azure callback        |
-
-> **Note:** The `:provider` segment refers to the OAuth provider slug (e.g., `google`, `linkedin`, `azure`).
-
----
-
-### Important
-
-Before using OAuth, you **must configure** the credentials in the file:
-
-```
-config/oauth_providers.php
-```
-
-Example configuration for Azure:
-
-```php
-<?php
-
-return [
-    'azure' => [
-        'class' => '\\TheNetworg\\OAuth2\\Client\\Provider\\Azure',
-        'env' => [
-            'clientId'     => 'YOUR_AZURE_CLIENT_ID',
-            'clientSecret' => 'YOUR_AZURE_CLIENT_SECRET',
-            'redirectUri'  => 'YOUR_AZURE_REDIRECT_URI',
-            'tenant'       => 'YOUR_AZURE_TENANT_ID',
-        ],
-    ],
-];
-```
-
-✅ **Make sure to replace** all placeholder values (`YOUR_AZURE_CLIENT_ID`, etc.) with your actual credentials.
-
----
-
-### Removing a Provider
-
-To remove an OAuth provider configuration:
+Remove:
 
 ```bash
 composer delete:oauth linkedin
@@ -270,53 +164,23 @@ composer delete:oauth linkedin
 
 ---
 
-### Example Usage
+## 📬 Email Support
+
+* Uses **PHPMailer**
+* SMTP settings: `config/php_mailer.php`
+
+Send using:
 
 ```php
-// Initialize the OAuth service
-$oauth = new \App\Services\OAuthService();
-
-// Load the Google provider
-$provider = $oauth->getProvider('google');
-
-// Generate the authorization URL to redirect the user
-$authUrl = $provider->getAuthorizationUrl();
-
-// Exchange the authorization code for an access token
-$token = $provider->getAccessToken('authorization_code', [
-    'code' => $_GET['code']
-]);
-
-// Retrieve the authenticated user details
-$user = $provider->getResourceOwner($token);
-```
-
----
-
-## Email Delivery
-
-EchoAPI provides **native email support** via PHPMailer.
-
-**SMTP settings** are stored in `config/mail.php`.
-
-### Example Usage
-
-```php
-use Core\Utils\MailHelper;
-
 $mail = new MailHelper();
-$mail->send(
-    'recipient@example.com',
-    'Subject here',
-    '<p>Hello, this is a test email.</p>'
-);
+$mail->send('to@example.com', 'Subject', '<p>Body</p>');
 ```
 
 ---
 
-## Caching
+## 🧠 Caching
 
-EchoAPI includes a **unified CacheService** powered by Symfony Cache, supporting:
+Supports **Symfony Cache** with:
 
 * Filesystem (default)
 * Redis
@@ -326,72 +190,95 @@ Configure in `.env`:
 
 ```ini
 CACHE_DRIVER=redis
-
 REDIS_HOST=127.0.0.1
-REDIS_PORT=6379
-REDIS_PASSWORD=null
-REDIS_DB=0
 ```
 
-If Redis or APCu is unavailable, Filesystem fallback is automatic.
+Fallback to filesystem if Redis/APCu is unavailable.
 
 ---
 
-## Swagger Documentation
+## 📃 Swagger Documentation
 
-Generate the OpenAPI specification:
+Generate:
 
 ```bash
 composer swagger:build
 ```
 
-This will create:
+Output: `app/docs/openapi.json`
 
-```
-app/docs/openapi.json
-```
+Use with tools like [Swagger UI](https://editor.swagger.io/)
 
 ---
 
-## Telegram Integration
+## 📢 Telegram Error Alerts
 
-To receive error notifications on Telegram, configure `.env`:
+Enable in `.env`:
 
 ```ini
-TELEGRAM_BOT_TOKEN=your_token
-TELEGRAM_CHAT_ID=your_chat_id
+TELEGRAM_BOT_TOKEN=xxx
+TELEGRAM_CHAT_ID=xxx
 ERROR_NOTIFY_CATEGORIES=critical,error,alert
 ```
 
-Test the integration:
+Test:
 
 ```bash
 composer telegram:test
 ```
 
----
-
-## Available Composer Scripts
-
-| Command         | Description                                    |
-| --------------- | ---------------------------------------------- |
-| `make:module`   | Generate a module (Controller, Service, Model) |
-| `delete:module` | Remove a module                                |
-| `make:crud`     | Generate CRUD based on a database table        |
-| `delete:crud`   | Remove generated CRUD files                    |
-| `list:crud`     | List all existing CRUDs                        |
-| `make:auth`     | Generate JWT authentication system             |
-| `delete:auth`   | Remove authentication files                    |
-| `make:oauth`    | Generate OAuth configuration                   |
-| `delete:oauth`  | Remove OAuth configuration                     |
-| `generate:key`  | Generate a new API Key                         |
-| `log:test`      | Generate sample log entries                    |
-| `telegram:test` | Send a test message to Telegram                |
-| `swagger:build` | Generate OpenAPI documentation                 |
+Alerts include level, message, IP, endpoint, and exception details.
 
 ---
 
-## License
+## 📚 Logging System
 
-MIT License
+* Based on **Monolog**
+* Logs saved to `/storage/logs/`
+* Files:
+
+  * `app.log` for general events (`INFO+`)
+  * `error.log` for errors only (`ERROR+`)
+* Logs are **rotated daily** (configurable via `LOG_RETENTION_DAYS`)
+* Telegram alerts are sent on critical levels with full context
+
+Includes:
+
+* IP address
+* User agent
+* URI
+* UID
+* Exception trace (when available)
+
+Test:
+
+```bash
+composer log:test
+```
+
+---
+
+## ⚙️ Composer Scripts
+
+| Command         | Description                         |
+| --------------- | ----------------------------------- |
+| `make:module`   | Create controller + service + model |
+| `delete:module` | Remove a module                     |
+| `make:crud`     | Generate CRUD from a database table |
+| `delete:crud`   | Delete CRUD components              |
+| `list:crud`     | Show registered CRUDs               |
+| `make:auth`     | Generate JWT auth system            |
+| `delete:auth`   | Remove JWT auth files               |
+| `make:oauth`    | Setup OAuth provider(s)             |
+| `delete:oauth`  | Remove provider config              |
+| `generate:key`  | Generate a new API Key              |
+| `log:test`      | Trigger sample logs                 |
+| `telegram:test` | Send test alert to Telegram         |
+| `swagger:build` | Generate OpenAPI documentation      |
+
+---
+
+## 🧾 License
+
+**MIT License**
 Developed by [Janderson Garcia](https://github.com/jandersongarcia)

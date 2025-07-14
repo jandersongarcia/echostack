@@ -1,5 +1,7 @@
 <?php
 
+session_start();
+
 // CORS Headers
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     header("Access-Control-Allow-Origin: *");

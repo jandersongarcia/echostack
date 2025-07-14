@@ -4,7 +4,6 @@ namespace Core\Services;
 
 use Monolog\Logger;
 use Monolog\Level;
-use Monolog\Handler\StreamHandler;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Processor\UidProcessor;
 use Monolog\Processor\IntrospectionProcessor;
@@ -31,8 +30,8 @@ class LoggerFactory
             $logger->pushProcessor(function ($record) use ($notifier) {
                 $telegramLevel = \Core\Helpers\LogLevelHelper::getTelegramLogLevel();
                 if ($record['level'] >= $telegramLevel->value) {
-                    $formattedMessage = "⛔ *{$record['level_name']}* - {$record['message']}\n\n" . json_encode($record['context'], JSON_PRETTY_PRINT);
-                    $notifier->send($formattedMessage);
+                    $formatted = self::formatTelegramMessage($record);
+                    $notifier->send($formatted);
                 }
                 return $record;
             });
@@ -55,10 +54,36 @@ class LoggerFactory
         $logger->pushProcessor(function ($record) {
             $record['extra']['ip'] = $_SERVER['REMOTE_ADDR'] ?? 'CLI';
             $record['extra']['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? 'CLI';
+            $record['extra']['uri'] = $_SERVER['REQUEST_URI'] ?? 'CLI';
             return $record;
         });
 
         return $logger;
     }
 
+    private static function formatTelegramMessage(\Monolog\LogRecord $record)
+    {
+        $emoji = match (true) {
+            $record['level'] >= Level::Critical->value => '🚨',
+            $record['level'] >= Level::Error->value    => '⛔',
+            $record['level'] >= Level::Warning->value  => '⚠️',
+            default                                     => 'ℹ️',
+        };
+
+        $message = "{$emoji} *{$record['level_name']}* - {$record['message']}\n\n";
+
+        if (!empty($record['context']['exception']) && $record['context']['exception'] instanceof \Throwable) {
+            $e = $record['context']['exception'];
+            $message .= "🧾 *Exception:* " . get_class($e) . "\n";
+            $message .= "📄 *Arquivo:* {$e->getFile()}:{$e->getLine()}\n";
+            $message .= "💬 *Mensagem:* {$e->getMessage()}\n\n";
+        }
+
+        $message .= "📌 *Endpoint:* " . ($record['extra']['uri'] ?? 'N/D') . "\n";
+        $message .= "🌐 *IP:* " . ($record['extra']['ip'] ?? 'N/D') . "\n";
+        $message .= "📱 *Agente:* " . ($record['extra']['user_agent'] ?? 'N/D') . "\n";
+        $message .= "🆔 *UID:* " . ($record['extra']['uid'] ?? 'N/D') . "\n";
+
+        return $message;
+    }
 }

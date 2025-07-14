@@ -1,15 +1,9 @@
 composer.phar
 composer.lock
 .env
-/config/oauth_providers.php
 /vendor/
-/app/frontend/
-/app/example/node_modules
-/app/todo/
 /storage/logs/
 /storage/cache/
-/Views/
-/old/
 
 *.bak
 

@@ -1,6 +1,7 @@
 composer.phar
 composer.lock
 .env
+/config/oauth_providers.php
 /vendor/
 /app/frontend/
 /app/example/node_modules

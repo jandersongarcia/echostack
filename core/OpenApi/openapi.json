@@ -1,0 +1,40 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "EchoAPI - REST API",
+        "description": "Minimal backend toolbox for APIs",
+        "version": "2.0.0"
+    },
+    "paths": {
+        "/v1/health": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "System health check",
+                "operationId": "5d08abd68134d2782a57e351c6e178b7",
+                "responses": {
+                    "200": {
+                        "description": "Returns the current status of the API subsystems",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "database": "connected",
+                                    "logs": "ok",
+                                    "telegram": "configured"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "System",
+            "description": "System endpoints"
+        }
+    ]
+}

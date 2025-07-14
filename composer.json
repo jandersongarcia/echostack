@@ -47,7 +47,7 @@
         "delete:auth": "php core/Scripts/delete-auth.php",
         "make:oauth": "php core/Scripts/make-oauth.php",
         "delete:oauth": "php core/Scripts/delete-oauth.php",
-        "swagger:build": "vendor/bin/openapi --bootstrap core/OpenApi/bootstrap-swagger.php --output app/docs/openapi.json src/"
+        "swagger:build": "vendor/bin/openapi --bootstrap core/OpenApi/bootstrap-swagger.php --output core/OpenApi/openapi.json src/"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,

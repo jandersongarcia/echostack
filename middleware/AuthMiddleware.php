@@ -41,6 +41,21 @@ class AuthMiddleware
 
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
+        // Bypass: Swagger JSON route
+        $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $swaggerBase = $_ENV['SWAGGER_ROUTE'] ?? '/docs';
+        $swaggerJsonUri = '/v1' . rtrim($swaggerBase, '/') . '/swagger.json';
+
+        // Bypass: Swagger JSON (dynamic route)
+        if ($uri === $swaggerJsonUri) {
+            $this->logger->info("AuthMiddleware: Swagger JSON route bypassed.", [
+                'uri' => $uri,
+                'ip' => $ip,
+                'user_agent' => $userAgent
+            ]);
+            return;
+        }
+
         // Bypass: health check route
         if ($uri === '/v1/health') {
             $this->logger->info("AuthMiddleware: Health check bypassed.", [

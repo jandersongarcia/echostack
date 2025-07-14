@@ -84,6 +84,13 @@ class HealthController
     private function getVersion(): string
     {
         $composer = json_decode(file_get_contents(__DIR__ . '/../../composer.json'), true);
-        return $composer['extra']['echoapi-version'] ?? 'unknown';
+        $version = $composer['extra']['echoapi-version'] ?? 'unknown';
+
+        if (!preg_match('/^(\d+)/', $version, $matches)) {
+            return 'unknown';
+        }
+
+        return $matches[1] . '.x.x';
     }
+
 }

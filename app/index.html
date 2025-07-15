@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="assets/favicon.png" />
+    <title>EchoAPI</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        font-family: system-ui, sans-serif;
+        background-color: #0f172a;
+        color: #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+
+      body {
+        animation: fadeIn 0.6s ease-in-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
+      .logo {
+        max-width: 150px;
+        width: 70%;
+        height: auto;
+        filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.2));
+        margin-bottom: 20px;
+      }
+
+      .version {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .info {
+        font-size: 1rem;
+        opacity: 0.7;
+        margin-bottom: 30px;
+      }
+
+      .info a {
+        color: #38bdf8;
+        text-decoration: none;
+      }
+
+      .info a:hover {
+        text-decoration: underline;
+      }
+
+      .status-box {
+        display: flex;
+        gap: 20px;
+        margin-top: 10px;
+      }
+
+      .status-item {
+        background-color: #1e293b;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .status-ok {
+        color: #22c55e;
+      }
+
+      .status-warn {
+        color: #facc15;
+      }
+
+      .status-fail {
+        color: #ef4444;
+      }
+
+      .status-label {
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+
+  <body>
+    <img src="assets/echoapi.png" alt="EchoAPI Logo" class="logo" />
+    <div class="version" id="version">Loading...</div>
+    <p class="info">
+      To test the API, access <a href="/v1/health">/v1/health</a><br />
+      <small
+        >View the docs at
+        <a href="https://github.com/jandersongarcia/EchoAPI" target="_blank"
+          >EchoAPI on GitHub</a
+        ></small
+      >
+    </p>
+
+    <div class="status-box" id="statusBox" style="display: none">
+      <div class="status-item">
+        🛢 <span class="status-label">DB:</span> <span id="status-db">–</span>
+      </div>
+      <div class="status-item">
+        📁 <span class="status-label">Logs:</span>
+        <span id="status-logs">–</span>
+      </div>
+      <div class="status-item">
+        📡 <span class="status-label">Telegram:</span>
+        <span id="status-telegram">–</span>
+      </div>
+    </div>
+
+    <script>
+      fetch("/v1/health")
+        .then(async (response) => {
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw data;
+          }
+
+          const version = data.version ?? "Unknown";
+          document.getElementById("version").textContent = `EchoAPI ${version}`;
+          document.getElementById("statusBox").style.display = "flex";
+
+          const mapStatus = (value) => {
+            switch (value) {
+              case "ok":
+              case "connected":
+              case "configured":
+                return ["status-ok", value];
+              case "warn_empty":
+              case "not_configured":
+                return ["status-warn", value];
+              default:
+                return ["status-fail", value];
+            }
+          };
+
+          const [dbClass, dbLabel] = mapStatus(data.database);
+          const [logsClass, logsLabel] = mapStatus(data.logs);
+          const [tgClass, tgLabel] = mapStatus(data.telegram);
+
+          document.getElementById("status-db").textContent = dbLabel;
+          document.getElementById("status-db").classList.add(dbClass);
+
+          document.getElementById("status-logs").textContent = logsLabel;
+          document.getElementById("status-logs").classList.add(logsClass);
+
+          document.getElementById("status-telegram").textContent = tgLabel;
+          document.getElementById("status-telegram").classList.add(tgClass);
+        })
+        .catch((error) => {
+          const version = document.getElementById("version");
+          const statusBox = document.getElementById("statusBox");
+
+          version.textContent = "EchoAPI (error)";
+          statusBox.style.display = "flex";
+
+          const db = document.getElementById("status-db").parentElement;
+          const logs = document.getElementById("status-logs").parentElement;
+          const telegram =
+            document.getElementById("status-telegram").parentElement;
+
+          // Hide other status items
+          logs.style.display = "none";
+          telegram.style.display = "none";
+
+          const dbStatus = document.getElementById("status-db");
+
+          const errorMessage = error?.message || "API unavailable";
+          const errorCode = error?.code ? ` (Code: ${error.code})` : "";
+
+          dbStatus.textContent = errorMessage + errorCode;
+          dbStatus.classList.add("status-fail");
+
+          // Hide DB label to display message only
+          db.querySelector(".status-label").style.display = "none";
+        });
+    </script>
+  </body>
+</html>

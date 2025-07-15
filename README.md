@@ -67,7 +67,6 @@ Ideal for developers seeking a functional, lightweight, and maintainable API arc
 ## 📁 Project Structure
 
 ```
-tree -L 2
 project-root/
 ├── app/                 # Swagger/OpenAPI docs
 ├── bootstrap/           # App bootstrap process

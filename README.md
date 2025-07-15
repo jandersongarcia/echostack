@@ -66,7 +66,7 @@ Ideal for developers seeking a functional, lightweight, and maintainable API arc
 
 ## 📁 Project Structure
 
-```
+```txt
 project-root/
 ├── app/                 # Swagger/OpenAPI docs
 ├── bootstrap/           # App bootstrap process
@@ -80,6 +80,37 @@ project-root/
 ├── composer.json        # Dependencies & scripts
 └── README.md
 ```
+
+---
+
+## 🗃 Database Initialization
+
+EchoAPI comes with a default database structure and initial data available in:
+
+```txt
+core/Migration/auth-migrations.sql
+```
+
+This script creates the basic authentication tables: `users`, `roles`, `user_tokens`, and `password_resets`.
+
+### Default user
+
+* **Email:** `master@echoapi.local`
+* **Password:** `master!123@`
+
+> ⚠️ The password is hashed in the database. Use this user only for first login or local development.
+
+### Automatic migration with Docker
+
+If you're using Docker, set the following in your `.env`:
+
+```ini
+AUTO_MIGRATE=true
+```
+
+This will automatically import the `auth-migrations.sql` during container startup.
+
+> 🔐 After successful migration, it is strongly recommended to set `AUTO_MIGRATE=false` to prevent re-imports and protect data integrity.
 
 ---
 

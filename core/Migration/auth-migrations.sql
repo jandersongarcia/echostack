@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 -- Copiando dados para a tabela data_base_name.users: ~1 rows (aproximadamente)
 INSERT INTO `users` (`id`, `role_id`, `user`, `email`, `password`, `creation_date`) VALUES
-	(1, 1, 'Master', 'master@echoapi.local', '$2y$10$zBYcfQv9wFmkJgJTZFwR6uI4zTWyOaXWgN8bl2cV3UwGcBSgk8YS2', '2025-07-14 18:43:15');
+	(1, 1, 'Master', 'master@echoapi.local', '$2y$10$kUpUMOLxlkcoZIlZuMb1zOuW7d3bW5kkpkFaDCV6Fg5/qzNGBZBMC', '2025-07-14 18:43:15');
 
 -- Copiando estrutura para tabela data_base_name.user_tokens
 CREATE TABLE IF NOT EXISTS `user_tokens` (

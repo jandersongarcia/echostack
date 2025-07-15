@@ -119,8 +119,10 @@ This will automatically import the `auth-migrations.sql` during container startu
 
 ## 📦 Install via Composer
 
+To start a new project with EchoAPI, run:
+
 ```bash
-composer require jandersongarcia/echoapi
+composer create-project jandersongarcia/echoapi echoapi-example
 ```
 
 More details: [https://packagist.org/packages/jandersongarcia/echoapi](https://packagist.org/packages/jandersongarcia/echoapi)

@@ -4,6 +4,9 @@
   </a>
 </p>
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/jandersongarcia/echoapi.svg)](https://packagist.org/packages/jandersongarcia/echoapi)
+[![Total Downloads](https://img.shields.io/packagist/dt/jandersongarcia/echoapi.svg)](https://packagist.org/packages/jandersongarcia/echoapi)
+
 # EchoAPI – Lightweight PHP Microstack for REST APIs
 
 **EchoAPI** is a minimalist microstack designed for developers who want to build RESTful APIs in PHP with speed, clean structure, and low coupling.
@@ -111,6 +114,16 @@ AUTO_MIGRATE=true
 This will automatically import the `auth-migrations.sql` during container startup.
 
 > 🔐 After successful migration, it is strongly recommended to set `AUTO_MIGRATE=false` to prevent re-imports and protect data integrity.
+
+---
+
+## 📦 Install via Composer
+
+```bash
+composer require jandersongarcia/echoapi
+```
+
+More details: [https://packagist.org/packages/jandersongarcia/echoapi](https://packagist.org/packages/jandersongarcia/echoapi)
 
 ---
 
@@ -346,3 +359,4 @@ ERROR_NOTIFY_CATEGORIES=critical,error,alert
 
 **MIT License**
 Developed by [Janderson Garcia](https://github.com/jandersongarcia)
+

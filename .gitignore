@@ -2,8 +2,12 @@ composer.phar
 composer.lock
 .env
 /vendor/
-/storage/logs/
-/storage/cache/
+
+/storage/logs/*
+!/storage/logs/.gitkeep
+
+/storage/cache/*
+!/storage/cache/.gitkeep
 
 *.bak
 

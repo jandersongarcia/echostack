@@ -1,6 +1,3 @@
-
-[![](app/assets/logo-echoapi.png)](https://github.com/jandersongarcia/EchoAPI)
-
 # EchoAPI – Lightweight PHP Microstack for REST APIs
 
 **EchoAPI** is a minimalist microstack designed for developers who want to build RESTful APIs in PHP with speed, clean structure, and low coupling.
@@ -87,8 +84,7 @@ project-root/
 git clone https://github.com/jandersongarcia/EchoAPI.git
 cd EchoAPI
 composer install
-cp .env_root .env
-mkdir -p storage/cache storage/logs
+cp .env.example .env
 chmod -R 775 storage
 ```
 
@@ -183,6 +179,14 @@ composer swagger:build
 ```
 
 Output: `app/docs/openapi.json` (for Swagger UI or Redoc).
+
+> ⚠️ When `APP_ENV=production`, access to `/v1/docs/swagger.json` is disabled for security reasons.
+
+Access the interactive Swagger UI at the `/docs/` endpoint of your deployed application. For example:
+
+```
+http://localhost:8080/docs/     (local development)
+```
 
 ---
 

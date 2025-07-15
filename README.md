@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://github.com/jandersongarcia/EchoAPI">
+    <img src="app/assets/logo-echoapi.png" alt="EchoAPI Logo" width="200" />
+  </a>
+</p>
+
 # EchoAPI – Lightweight PHP Microstack for REST APIs
 
 **EchoAPI** is a minimalist microstack designed for developers who want to build RESTful APIs in PHP with speed, clean structure, and low coupling.

@@ -1,4 +1,4 @@
-* [Início](/)
+* [Início](README.md)
 * [Instalação](instalacao.md)
 * [Configuração](configuracao.md)
 * [Rotas](rotas.md)

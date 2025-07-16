@@ -1,2 +1,8 @@
 * [Início](README.md)
 * [Instalação](instalacao.md)
+* [Configuração](configuracao.md)
+* [Rotas](rotas.md)
+* [Autenticação](autenticacao.md)
+* [Telegram](telegram.md)
+* [CRUD Automatizado](crud.md)
+* [Scripts CLI](scripts.md)

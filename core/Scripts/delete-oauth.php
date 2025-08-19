@@ -2,7 +2,7 @@
 <?php
 /**
  * Script: delete-oauth.php
- * Purpose: Remove configured OAuth providers from EchoAPI
+ * Purpose: Remove configured OAuth providers from EchoStack
  */
 
 define('DIR', dirname(__DIR__, 2));
@@ -19,8 +19,8 @@ if (empty($argv)) {
 
 // Paths
 $configFile = DIR . '/config/oauth_providers.php';
-$serviceFile = DIR . '/src/Services/OAuthService.php';
-$controllerFile = DIR . '/src/Controllers/OAuthController.php';
+$serviceFile = DIR . '/app/Services/OAuthService.php';
+$controllerFile = DIR . '/app/Controllers/OAuthController.php';
 $webRoutesFile = DIR . '/routes/web.php';
 $publicRoutesFile = DIR . '/routes/public-routes.php';
 

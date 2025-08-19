@@ -1,0 +1,162 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API V1",
+        "description": "API Documentation Version 1",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/v1/client": {
+            "post": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Autentica um jogador",
+                "operationId": "c3940ca7d695fd0e908e8642a0c11d96",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "client_key",
+                                    "game_key",
+                                    "player_id"
+                                ],
+                                "properties": {
+                                    "client_key": {
+                                        "type": "string"
+                                    },
+                                    "game_key": {
+                                        "type": "string"
+                                    },
+                                    "player_id": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token JWT gerado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "token": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Campo ausente"
+                    },
+                    "401": {
+                        "description": "Falha de autenticação"
+                    }
+                }
+            }
+        },
+        "/v1/token/{token}": {
+            "get": {
+                "tags": [
+                    "Token"
+                ],
+                "summary": "Valida o token JWT",
+                "description": "Valida um token JWT enviado como parâmetro de rota. Requer o header X-GAME-API.",
+                "operationId": "0695f17bf51f549c442229d43bb10851",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "description": "Token JWT a ser validado",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-GAME-API",
+                        "in": "header",
+                        "description": "Hash do jogo",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token válido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "active": {
+                                            "type": "integer",
+                                            "example": 1
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Header ausente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "missing_game_hash"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token inválido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "active": {
+                                            "type": "integer",
+                                            "example": 0
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "invalid_token"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Autenticação",
+            "description": "Autenticação"
+        },
+        {
+            "name": "Token",
+            "description": "Token"
+        }
+    ]
+}

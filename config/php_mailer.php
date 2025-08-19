@@ -10,10 +10,10 @@ return [
     | essential for sending emails through your application.
     |
     */
-    'host' => 'smtp.hostinger.com', // Replace with your SMTP server address
+    'host' => '', // Replace with your SMTP server address
     'port' => 465, // Choose between 587 or 465 for a secure SSL connection
-    'username' => 'noreply@jsdesenhos.com.br', // Replace with your email address
-    'password' => 'Hostinger!274786@', // Replace with your password
+    'username' => '', // Replace with your email address
+    'password' => '', // Replace with your password
     'smtp_secure' => 'ssl', // Choose between 'tls' or 'ssl' for a secure connection
     'mail_driver' => 'smtp', // Mail driver to use for sending emails
 
@@ -26,8 +26,8 @@ return [
     | important for sending emails from the application.
     |
     */
-    'from_email' => 'noreply@jsdesenhos.com.br', // Default sender email address
-    'from_name' => 'JS Desenhos', // Default sender name
+    'from_email' => '', // Default sender email address
+    'from_name' => '', // Default sender name
 
     /*
     |--------------------------------------------------------------------------

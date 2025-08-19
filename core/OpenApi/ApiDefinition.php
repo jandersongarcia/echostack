@@ -6,9 +6,9 @@ use OpenApi\Annotations as OA;
 
 /**
  * @OA\Info(
- *     title="EchoAPI",
+ *     title="EchoStack",
  *     version="2.0.0",
- *     description="EchoAPI API Documentation"
+ *     description="EchoStack API Documentation"
  * )
  */
 class ApiDefinition {}

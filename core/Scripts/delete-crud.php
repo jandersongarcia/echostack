@@ -1,35 +1,46 @@
 <?php
 
+require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 require_once 'helper-script.php';
 
+use Dotenv\Dotenv;
+
+$dotenv = Dotenv::createImmutable(dirname(__DIR__, 2));
+$dotenv->load();
+
+$langCode = strtolower($_ENV['LANGUAGE'] ?? 'en');
+$langFile = dirname(__DIR__, 2) . "/core/lang/{$langCode}.php";
+$lang = file_exists($langFile) ? require $langFile : [];
+$msg = $lang['delete:crud'] ?? [];
+
 $table = $argv[1] ?? null;
-if (!$table) {
-    out('WARNING', "Please provide the table name: composer delete:crud table_name", 'yellow');
+$versionInput = $argv[2] ?? null;
+
+if (!$table || !$versionInput) {
+    out('WARNING', $msg['usage'] ?? "Uso incorreto.", 'yellow');
     exit;
 }
 
+$version = ucfirst(strtolower(trim($versionInput))); // ex: V1
 $className = ucfirst(rtrim($table, 's'));
 $controllerName = "{$className}Controller";
 $serviceName = "{$className}Service";
 $modelName = $className;
 
-// File paths
-$basePath = dirname(__DIR__, 2) . '/src';
-$modelPath = "{$basePath}/Models/{$modelName}.php";
-$servicePath = "{$basePath}/Services/{$serviceName}.php";
-$controllerPath = "{$basePath}/Controllers/{$controllerName}.php";
+$basePath = dirname(__DIR__, 2) . "/app/{$version}";
+$modelPath = "$basePath/Models/{$modelName}.php";
+$servicePath = "$basePath/Services/{$serviceName}.php";
+$controllerPath = "$basePath/Controllers/{$controllerName}.php";
 
-// Delete PHP files if they exist
 foreach ([$modelPath, $servicePath, $controllerPath] as $file) {
     if (file_exists($file)) {
         unlink($file);
-        out('SUCCESS', "Deleted: {$file}", 'green');
+        out('SUCCESS', str_replace(':file', $file, $msg['deleted'] ?? "Deleted: :file"), 'green');
     } else {
-        out('WARNING', "Not found (skipped): {$file}", 'yellow');
+        out('WARNING', str_replace(':file', $file, $msg['skipped'] ?? "Not found: :file"), 'yellow');
     }
 }
 
-// === Remove related routes and auto-generated comments from routes/web.php, cleaning blank lines ===
 $routeFile = dirname(__DIR__, 2) . '/routes/web.php';
 if (file_exists($routeFile)) {
     $lines = file($routeFile);
@@ -39,16 +50,14 @@ if (file_exists($routeFile)) {
     foreach ($lines as $line) {
         $trimmedLine = trim($line);
 
-        // Skip routes or comments related to the table or controller
         if (
-            str_contains($trimmedLine, "/v1/{$table}") ||
+            str_contains($trimmedLine, "/{$version}/{$table}") ||
             str_contains($trimmedLine, $controllerName) ||
             str_contains($trimmedLine, "// Auto-generated CRUD routes for {$table}")
         ) {
             continue;
         }
 
-        // Clean multiple consecutive blank lines
         if ($trimmedLine === '') {
             if (!$previousLineWasBlank) {
                 $newContent .= PHP_EOL;
@@ -61,11 +70,11 @@ if (file_exists($routeFile)) {
     }
 
     file_put_contents($routeFile, trim($newContent) . PHP_EOL);
-    out('SUCCESS', "Routes and comments for '{$table}' removed and blank lines cleaned from routes/web.php", 'green');
+    out('SUCCESS', str_replace(':table', $table, $msg['routes_cleaned'] ?? 'Rotas limpas.'), 'green');
 } else {
-    out('ERROR', "routes/web.php not found.", 'red');
+    out('ERROR', $msg['routes_file_missing'] ?? 'Arquivo de rotas não encontrado.', 'red');
 }
 
-out('SUCCESS', "CRUD successfully deleted for table '{$table}'.", 'green');
-out('INFO', 'Running swagger:build...');
+out('SUCCESS', str_replace(':table', $table, $msg['crud_deleted'] ?? 'CRUD removido.'), 'green');
+out('INFO', $msg['swagger_running'] ?? 'Atualizando Swagger...', 'cyan');
 echo shell_exec("composer swagger:build");

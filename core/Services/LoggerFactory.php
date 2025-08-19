@@ -12,9 +12,9 @@ use Core\Services\TelegramNotifier;
 
 class LoggerFactory
 {
-    public static function create(): Logger
+    public static function create(string $channel = 'app'): Logger
     {
-        $logger = new Logger('app');
+        $logger = new Logger($channel);
 
         // Define timezone global dos logs
         $timezone = new \DateTimeZone($_ENV['TIME_ZONE'] ?? 'UTC');
@@ -42,12 +42,13 @@ class LoggerFactory
         $retentionDays = is_numeric($envDays) ? max((int) $envDays, 1) : 14;
 
         $logger->pushHandler(
-            new RotatingFileHandler("$logPath/app.log", $retentionDays, Level::Info)
+            new RotatingFileHandler("{$logPath}/{$channel}.log", $retentionDays, Level::Info)
         );
 
         $logger->pushHandler(
-            new RotatingFileHandler("$logPath/error.log", $retentionDays, Level::Error)
+            new RotatingFileHandler("{$logPath}/{$channel}_error.log", $retentionDays, Level::Error)
         );
+
 
         $logger->pushProcessor(new UidProcessor());
         $logger->pushProcessor(new IntrospectionProcessor());
@@ -65,9 +66,9 @@ class LoggerFactory
     {
         $emoji = match (true) {
             $record['level'] >= Level::Critical->value => '🚨',
-            $record['level'] >= Level::Error->value    => '⛔',
-            $record['level'] >= Level::Warning->value  => '⚠️',
-            default                                     => 'ℹ️',
+            $record['level'] >= Level::Error->value => '⛔',
+            $record['level'] >= Level::Warning->value => '⚠️',
+            default => 'ℹ️',
         };
 
         $message = "{$emoji} *{$record['level_name']}* - {$record['message']}\n\n";
@@ -86,4 +87,43 @@ class LoggerFactory
 
         return $message;
     }
+
+    public static function createDiagnosticsLogger(?array $data = null): Logger
+    {
+        $logger = new Logger('diagnostics');
+
+        $timezone = new \DateTimeZone($_ENV['TIME_ZONE'] ?? 'UTC');
+        $logger->setTimezone($timezone);
+
+        $logPath = PathResolver::logsPath();
+
+        $envDays = $_ENV['LOG_RETENTION_DAYS'] ?? 14;
+        $retentionDays = is_numeric($envDays) ? max((int) $envDays, 1) : 14;
+
+        $logger->pushHandler(new RotatingFileHandler("$logPath/diagnostics.log", $retentionDays, Level::Debug));
+        $logger->pushHandler(new \Monolog\Handler\StreamHandler("$logPath/diagnostics.log", Level::Debug, false));
+
+        $logger->pushProcessor(new UidProcessor());
+        $logger->pushProcessor(new IntrospectionProcessor());
+        $logger->pushProcessor(function ($record) {
+            $record['extra']['ip'] = $_SERVER['REMOTE_ADDR'] ?? 'CLI';
+            $record['extra']['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? 'CLI';
+            $record['extra']['uri'] = $_SERVER['REQUEST_URI'] ?? 'CLI';
+            return $record;
+        });
+
+        if ($data) {
+            $logger->info('Request diagnostics', $data);
+
+            $threshold = (int) ($_ENV['DIAGNOSTICS_THRESHOLD_MS'] ?? 150);
+            if (($data['execution_time_ms'] ?? 0) > $threshold) {
+                $logger->warning('⚠️ High execution time detected', $data);
+            }
+        }
+
+        return $logger;
+    }
+
+
+
 }

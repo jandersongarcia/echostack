@@ -72,13 +72,13 @@ Ideal for developers seeking a functional, lightweight, and maintainable API arc
 ```txt
 project-root/
 ├── app/                 # Swagger/OpenAPI docs
-├── bootstrap/           # App bootstrap process
+├── Bootstrap           # App bootstrap process
 ├── config/              # Configuration files
 ├── core/                # Kernel, helpers, services
 ├── storage/             # Cache & logs
 ├── middleware/          # HTTP middlewares
 ├── routes/              # Route definitions
-├── src/                 # App logic (MVC)
+├── app/                 # App logic (MVC)
 ├── .env                 # Environment settings
 ├── composer.json        # Dependencies & scripts
 └── README.md
@@ -308,6 +308,46 @@ TELEGRAM_BOT_TOKEN=xxx
 TELEGRAM_CHAT_ID=xxx
 ERROR_NOTIFY_CATEGORIES=critical,error,alert
 ```
+
+---
+
+## 🧹 Limpeza de Arquivos Temporários (`clear:storage`)
+
+Para facilitar a manutenção da aplicação, o EchoStack oferece um comando para limpar os diretórios de cache, logs e lixeira (`trash`).
+
+### 🔧 Uso
+
+```bash
+composer clear:storage [--only=cache|logs|trash] [--keep-days=N] [--dry-run]
+```
+
+### ⚙️ Opções
+
+| Opção           | Descrição                                                           |
+| --------------- | ------------------------------------------------------------------- |
+| `--only=cache`  | Limpa apenas a pasta `storage/cache`                                |
+| `--only=logs`   | Limpa apenas os arquivos da pasta `storage/logs`                    |
+| `--only=trash`  | Limpa apenas a pasta `storage/trash`                                |
+| `--keep-days=7` | Mantém arquivos modificados nos últimos N dias                      |
+| `--dry-run`     | Apenas simula a exclusão, exibindo os arquivos que seriam removidos |
+
+### 📦 Exemplos
+
+```bash
+# Limpa todos os diretórios (cache, logs e trash)
+composer clear:storage
+
+# Limpa apenas o cache
+composer clear:storage --only=cache
+
+# Limpa logs mais antigos que 3 dias
+composer clear:storage --only=logs --keep-days=3
+
+# Simula a limpeza da lixeira sem excluir
+composer clear:storage --only=trash --dry-run
+```
+
+> Os arquivos excluídos são listados diretamente no terminal. Diretórios vazios também são removidos automaticamente.
 
 ---
 

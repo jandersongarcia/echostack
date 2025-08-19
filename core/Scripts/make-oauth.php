@@ -2,7 +2,7 @@
 <?php
 /**
  * Script: make-oauth.php
- * Purpose: Automated setup of OAuth providers in EchoAPI
+ * Purpose: Automated setup of OAuth providers in EchoStack
  */
 
 define('DIR', dirname(__DIR__, 2));
@@ -68,8 +68,8 @@ if (empty($argv)) {
 
 // Paths
 $configFile = DIR . '/config/oauth_providers.php';
-$serviceFile = DIR . '/src/Services/OAuthService.php';
-$controllerFile = DIR . '/src/Controllers/OAuthController.php';
+$serviceFile = DIR . '/app/Services/OAuthService.php';
+$controllerFile = DIR . '/app/Controllers/OAuthController.php';
 $webRoutesFile = DIR . '/routes/web.php';
 $publicRoutesFile = DIR . '/routes/public-routes.php';
 

@@ -43,7 +43,7 @@ if (!empty($missing)) {
 
 $botToken = $_ENV['TELEGRAM_BOT_TOKEN'];
 $chatId = $_ENV['TELEGRAM_CHAT_ID'];
-$message = '🚀 Telegram test message from EchoAPI';
+$message = '🚀 Telegram test message from EchoStack';
 
 if (trim($message) === '') {
     echo "❌ Message text is empty. Nothing was sent to Telegram.\n";

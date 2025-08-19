@@ -2,24 +2,63 @@
 
 /**
  * Script: delete-auth.php
- * Purpose: Safely removes all authentication files (Controller, Service, Middleware, SQL) and only the /auth routes from routes/web.php and public-routes.php.
- * If called with "all" flag, also drops the related database tables (users, password_resets, tokens).
+ * Uso: composer delete:auth v1 [all]
  */
 
-define('DIR', dirname(__DIR__, 2));
-require_once 'helper-script.php';
-require_once DIR . '/vendor/autoload.php';
+$vendorAutoload = realpath(__DIR__ . '/../../vendor/autoload.php');
+if (!$vendorAutoload || !file_exists($vendorAutoload)) {
+    echo "❌ vendor/autoload.php não encontrado. Execute 'composer install'.\n";
+    exit(1);
+}
+require_once $vendorAutoload;
 
+use Core\Helpers\PathResolver;
+use Core\Utils\Core\LanguageHelper;
 use Dotenv\Dotenv;
 use Medoo\Medoo;
 
-// Load .env
-$dotenv = Dotenv::createImmutable(DIR);
+$basePath = PathResolver::basePath();
+
+// Carrega idioma
+$lang = LanguageHelper::getDefaultLanguage();
+$langFile = "{$basePath}/core/Lang/{$lang}.php";
+if (!file_exists($langFile)) {
+    $lang = 'en';
+    $langFile = "{$basePath}/core/Lang/en.php";
+}
+$__ = include $langFile;
+$t = fn($key, $replacements = []) =>
+    str_replace(
+        array_map(fn($k) => ":{$k}", array_keys($replacements)),
+        array_values($replacements),
+        $__['delete:auth'][$key] ?? $key
+    );
+
+// Captura versão
+$version = $argv[1] ?? null;
+$deleteTables = in_array('all', $argv);
+
+if (!$version || !preg_match('/^v[0-9]+$/', $version)) {
+    echo $t('usage') . "\n";
+    exit(1);
+}
+
+$src = "{$basePath}/app/{$version}";
+$routeFile = "{$basePath}/routes/{$version}.php";
+
+if (!is_dir($src)) {
+    echo $t('version_missing', ['version' => $version]) . "\n";
+    exit(1);
+}
+
+echo $t('mode', ['mode' => $deleteTables ? 'FULL' : 'SAFE', 'extras' => $deleteTables ? '+ banco de dados' : '']) . "\n";
+
+// Carrega .env
+$dotenv = Dotenv::createImmutable($basePath);
 $dotenv->load();
 
-// Connect to DB
 $database = new Medoo([
-    'type' => 'mysql',
+    'type' => $_ENV['DB_DRIVER'],
     'host' => $_ENV['DB_HOST'],
     'database' => $_ENV['DB_NAME'],
     'username' => $_ENV['DB_USER'],
@@ -28,88 +67,73 @@ $database = new Medoo([
     'charset' => 'utf8mb4'
 ]);
 
-// Check if "all" flag was passed
-$deleteTables = in_array('all', $argv);
-out('INFO', $deleteTables ? 'Mode: FULL deletion (files + routes + database tables)' : 'Mode: Files and routes only');
-
-// === Delete Auth-related PHP files ===
-$filesToDelete = [
-    DIR . '/src/Controllers/AuthController.php',
-    DIR . '/src/Services/AuthService.php',
-    DIR . '/Middleware/JwtAuthMiddleware.php',
-    DIR . '/src/Views/emails/recover-template.php',
+// Arquivos
+$files = [
+    "{$src}/Controllers/AuthController.php",
+    "{$src}/Services/AuthService.php",
+    "{$src}/Views/emails/recover-template.php"
 ];
 
-foreach ($filesToDelete as $file) {
-    $fileLabel = str_replace(DIR, '', $file);
+foreach ($files as $file) {
+    $label = str_replace($basePath, '', $file);
     if (file_exists($file)) {
         unlink($file);
-        out('INFO', "File deleted: {$fileLabel}");
+        echo $t('file_deleted', ['file' => $label]) . "\n";
     } else {
-        out('WARNING', "File not found: {$fileLabel}", 'yellow');
+        echo $t('file_not_found', ['file' => $label]) . "\n";
     }
 }
 
-// === Remove /auth routes from routes/web.php and clean extra blank lines ===
-$routeFile = DIR . '/routes/web.php';
+// Remover rotas da versão
 if (file_exists($routeFile)) {
     $lines = file($routeFile);
     $output = '';
-    $blankLineFlag = false;
+    $blank = false;
 
     foreach ($lines as $line) {
-        $trimmed = trim($line);
-
-        // Skip auth routes and the generated comment
-        if (strpos($trimmed, '/auth/') !== false || strpos($trimmed, 'Auto-generated CRUD routes for Auth') !== false) {
-            out('INFO', "Removed from web.php: " . $trimmed);
+        $trim = trim($line);
+        if (str_contains($trim, '/login') || str_contains($trim, '/register') || str_contains($trim, '/forgot-password') || str_contains($trim, '/reset-password') || str_contains($trim, '/logout')) {
+            echo $t('route_removed', ['route' => $trim]) . "\n";
             continue;
         }
 
-        // Clean multiple consecutive blank lines
-        if ($trimmed === '') {
-            if (!$blankLineFlag) {
+        if ($trim === '') {
+            if (!$blank) {
                 $output .= PHP_EOL;
-                $blankLineFlag = true;
+                $blank = true;
             }
         } else {
             $output .= $line;
-            $blankLineFlag = false;
+            $blank = false;
         }
     }
 
     file_put_contents($routeFile, trim($output) . PHP_EOL);
-    out('SUCCESS', 'Auth routes and blank lines cleaned from routes/web.php', 'green');
+    echo $t('routes_cleaned') . "\n";
 } else {
-    out('WARNING', 'routes/web.php not found.', 'yellow');
+    echo $t('webphp_missing') . "\n";
 }
 
-// === Remove /auth public routes from public-routes.php ===
-$publicRouteFile = DIR . '/routes/public-routes.php';
+// Remover public-routes
+$publicRouteFile = "{$basePath}/routes/public-routes.php";
 if (file_exists($publicRouteFile)) {
-    $currentRoutes = include $publicRouteFile;
-    if (!is_array($currentRoutes)) {
-        $currentRoutes = [];
+    $routes = include $publicRouteFile;
+    if (!is_array($routes)) $routes = [];
+
+    $cleaned = array_filter($routes, fn($r) => !str_contains($r, '/auth/') && !str_contains($r, '/login') && !str_contains($r, '/register'));
+    $formatted = "[\n";
+    foreach ($cleaned as $r) {
+        $formatted .= "    '" . addslashes($r) . "',\n";
     }
+    $formatted .= "];\n";
 
-    $filteredRoutes = array_filter($currentRoutes, function ($route) {
-        return strpos($route, '/auth/') === false;
-    });
-
-    // Regrava com short array syntax ([])
-    $formattedRoutes = "[\n";
-    foreach ($filteredRoutes as $route) {
-        $formattedRoutes .= "    '" . addslashes($route) . "',\n";
-    }
-    $formattedRoutes .= "];\n";
-
-    file_put_contents($publicRouteFile, "<?php\nreturn " . $formattedRoutes);
-    out('SUCCESS', 'Auth routes removed from routes/public-routes.php', 'green');
+    file_put_contents($publicRouteFile, "<?php\nreturn " . $formatted);
+    echo $t('public_routes_cleaned') . "\n";
 } else {
-    out('WARNING', 'routes/public-routes.php not found.', 'yellow');
+    echo $t('publicphp_missing') . "\n";
 }
 
-// === Optional: Drop database tables if "all" flag was passed ===
+// Drop tables
 if ($deleteTables) {
     try {
         $database->pdo->exec("
@@ -119,16 +143,16 @@ if ($deleteTables) {
             DROP TABLE IF EXISTS users;
             SET FOREIGN_KEY_CHECKS=1;
         ");
-        out('SUCCESS', 'Auth-related tables dropped from the database.', 'green');
-    } catch (PDOException $e) {
-        out('ERROR', 'Failed to drop tables: ' . $e->getMessage(), 'red');
+        echo $t('tables_dropped') . "\n";
+    } catch (Throwable $e) {
+        echo "\033[31m" . $t('tables_failed', ['error' => $e->getMessage()]) . "\033[0m\n";
     }
 } else {
-    out('INFO', 'Database tables were kept. Run \"composer delete:auth all\" if you want to drop them.', 'yellow');
+    echo $t('tables_skipped') . "\n";
 }
 
-// Rebuild Swagger docs
-out('INFO', 'Running Swagger build...');
-echo shell_exec("composer swagger:build");
+// Swagger
+echo $t('swagger_building') . "\n";
+shell_exec("composer swagger:build");
 
-out('SUCCESS', 'Auth deletion process completed.', 'green');
+echo $t('finalized', ['version' => $version]) . "\n";

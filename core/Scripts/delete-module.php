@@ -1,74 +1,110 @@
 <?php
+/**
+ * Script: core/Scripts/delete-module.php
+ * Uso: composer delete:module NomeDaEntidade v1
+ */
 
 require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
-use Symfony\Component\Console\Application;
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Output\OutputInterface;
 use Core\Helpers\PathResolver;
+use Core\Utils\Core\LanguageHelper;
 
-class DeleteModuleCommand extends Command
-{
-    public function __construct()
-    {
-        parent::__construct('delete:module');
+$basePath = PathResolver::basePath();
+
+// Idioma
+$lang = LanguageHelper::getDefaultLanguage();
+$langFile = "$basePath/core/Lang/{$lang}.php";
+if (!file_exists($langFile)) {
+    $langFile = "$basePath/core/Lang/en.php";
+}
+$__ = include $langFile;
+$t = fn($key, $replacements = []) =>
+    str_replace(
+        array_map(fn($k) => ":{$k}", array_keys($replacements)),
+        array_values($replacements),
+        $__['delete:module'][$key] ?? $key
+    );
+
+// Argumentos ajustados para compatibilidade com composer.json
+$entity = $argv[2] ?? null;
+$version = $argv[3] ?? null;
+
+if (!$entity || !$version || !preg_match('/^v[0-9]+$/i', $version)) {
+    echo $t('usage') . "\n";
+    exit(1);
+}
+
+$entity = ucfirst(preg_replace('/[^a-zA-Z0-9]/', '', $entity));
+$namespacePrefix = 'V' . ltrim(strtolower($version), 'v');
+$routePath = strtolower(preg_replace('/(?<!^)[A-Z]/', '-$0', $entity));
+$controllerNamespace = "App\\{$namespacePrefix}\\Controllers\\{$entity}Controller";
+
+$deletedFiles = 0;
+$notFoundFiles = 0;
+
+$dirs = [
+    "app/{$namespacePrefix}/Controllers" => "{$entity}Controller.php",
+    "app/{$namespacePrefix}/Models"      => "{$entity}.php",
+    "app/{$namespacePrefix}/Validators"  => "{$entity}Validator.php",
+    "app/{$namespacePrefix}/Services"    => "{$entity}Service.php",
+];
+
+foreach ($dirs as $folder => $file) {
+    $abs = PathResolver::basePath() . "/$folder/$file";
+    if (file_exists($abs)) {
+        try {
+            unlink($abs);
+            echo $t('file_deleted', ['file' => "$folder/$file"]) . "\n";
+            $deletedFiles++;
+        } catch (Throwable $e) {
+            echo "\033[31m" . $t('file_failed', ['file' => "$folder/$file", 'error' => $e->getMessage()]) . "\033[0m\n";
+        }
+    } else {
+        echo $t('file_not_found', ['file' => "$folder/$file"]) . "\n";
+        $notFoundFiles++;
     }
 
-    protected function configure()
-    {
-        $this
-            ->setDescription('Remove todos os arquivos e rotas gerados para um módulo')
-            ->addArgument('entity', InputArgument::REQUIRED, 'O nome da entidade (ex: User, Product, Order)');
-    }
-
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
-        $entity = ucfirst($input->getArgument('entity'));
-        $plural = strtolower($entity) . 's';
-
-        $controllerFile = PathResolver::srcPath("Controllers/{$entity}Controller.php");
-        $modelFile = PathResolver::srcPath("Models/{$entity}.php");
-        $validatorFile = PathResolver::srcPath("Validators/{$entity}Validator.php");
-        $serviceFile = PathResolver::srcPath("Services/{$entity}Service.php");
-        $routeFile = PathResolver::routesPath("web.php");
-        $backupRouteFile = $routeFile . '.bak';
-
-        // Deletar arquivos
-        foreach ([$controllerFile, $modelFile, $validatorFile, $serviceFile] as $file) {
-            if (file_exists($file)) {
-                unlink($file);
-                $output->writeln("✅ Arquivo removido: {$file}");
-            } else {
-                $output->writeln("⚠ Arquivo não encontrado: {$file}");
-            }
-        }
-
-        // Backup de segurança das rotas
-        if (file_exists($routeFile)) {
-            copy($routeFile, $backupRouteFile);
-            $output->writeln("💄 Backup de rotas criado em: {$backupRouteFile}");
-        }
-
-        // Limpar rotas
-        $routeContent = file_get_contents($routeFile);
-
-        // Remove o use statement
-        $useStatement = "use App\\Controllers\\{$entity}Controller;\n";
-        $routeContent = str_replace($useStatement, '', $routeContent);
-
-        // Remove o bloco de rotas
-        $pattern = "/\\/\\/ Rotas para {$entity}.*?(?=\\n\\n|\Z)/s";
-        $routeContent = preg_replace($pattern, '', $routeContent);
-
-        file_put_contents($routeFile, $routeContent);
-        $output->writeln("✅ Rotas removidas do arquivo web.php");
-
-        return Command::SUCCESS;
+    // Remove diretório se estiver vazio
+    if (is_dir($base = PathResolver::basePath() . "/$folder") && count(glob("$base/*")) === 0) {
+        @rmdir($base);
     }
 }
 
-$application = new Application();
-$application->add(new DeleteModuleCommand());
-$application->run();
+$routeFile = PathResolver::basePath() . "/routes/{$namespacePrefix}.php";
+if (!file_exists($routeFile)) {
+    echo $t('routes_not_found', ['file' => "routes/{$namespacePrefix}.php"]) . "\n";
+    exit(0);
+}
+
+$lines = file($routeFile);
+$output = '';
+$removed = 0;
+
+foreach ($lines as $line) {
+    $trimmed = trim($line);
+    if (
+        str_contains($trimmed, "/{$routePath}") &&
+        str_contains($trimmed, $controllerNamespace)
+    ) {
+        $removed++;
+        echo $t('route_removed', ['line' => $trimmed]) . "\n";
+        continue;
+    }
+    $output .= $line;
+}
+
+file_put_contents($routeFile, $output);
+
+if ($removed) {
+    echo $t('routes_cleaned', ['count' => $removed]) . "\n";
+} else {
+    echo $t('no_routes_found', ['route' => "/{$routePath}"]) . "\n";
+}
+
+echo $t('summary', [
+    'files' => $deletedFiles,
+    'skipped' => $notFoundFiles,
+    'routes' => $removed
+]) . "\n";
+
+exit(0);

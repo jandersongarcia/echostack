@@ -1,0 +1,23 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Página customizada de erro 403
+    ErrorDocument 403 /errors/403.html
+
+    # Bloquear acesso direto ao diretório api
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/api/ [NC]
+    RewriteRule ^ - [F,L]
+
+    # Redireciona qualquer requisição para /v{n} para a API
+    RewriteCond %{REQUEST_URI} ^/v[0-9]+(/.*)?$ [NC]
+    RewriteRule ^v[0-9]+(/.*)?$ api/index.php [QSA,L]
+
+    # Se for arquivo ou diretório existente, serve diretamente
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Todo o restante vai para o index.html (SPA)
+    RewriteRule ^ index.html [QSA,L]
+</IfModule>

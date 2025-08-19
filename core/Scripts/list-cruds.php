@@ -1,6 +1,6 @@
 <?php
 
-$basePath = dirname(__DIR__, 2) . '/src';
+$basePath = dirname(__DIR__, 2) . '/app';
 $routePath = dirname(__DIR__, 2) . '/routes/web.php';
 
 // Lista de entidades baseadas nos arquivos

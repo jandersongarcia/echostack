@@ -2,6 +2,9 @@
 
 use Medoo\Medoo;
 use Monolog\Logger;
+use Core\Helpers\PathResolver;
+
+
 
 /**
  * Verifica se a migração automática está habilitada via .env.
@@ -25,7 +28,8 @@ function tableExists(PDO $pdo, string $table): bool
  */
 function disableAutoMigrate(Logger $logger): void
 {
-    $envFile = __DIR__ . '/../.env';
+    
+    $envFile =   PathResolver::basePath() . '/.env';
 
     if (!file_exists($envFile)) {
         $logger->warning(".env file not found. Unable to disable AUTO_MIGRATE.");

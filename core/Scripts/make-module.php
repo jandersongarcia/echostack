@@ -1,6 +1,9 @@
 <?php
+/**
+ * Script: core/Scripts/make-module.php
+ * Uso: composer make:module Entity V1
+ */
 
-// Carga do autoload segura via diretório absoluto:
 require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
 use Core\Helpers\PathResolver;
@@ -9,102 +12,118 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Output\OutputInterface;
+use Core\Utils\Core\LanguageHelper;
 
 class MakeModuleCommand extends Command
 {
+    protected array $__;
+    protected $translator;
+
     public function __construct()
     {
         parent::__construct('make:module');
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
-            ->setDescription('Gera automaticamente o módulo completo para uma entidade (Controller, Model, Validator, Service e Rotas)')
-            ->addArgument('entity', InputArgument::REQUIRED, 'O nome da entidade (ex: User, Product, Order)');
+            ->setDescription('Gera automaticamente o módulo completo para uma entidade em uma versão específica')
+            ->addArgument('entity', InputArgument::REQUIRED, 'O nome da entidade (ex: User, Product, Order)')
+            ->addArgument('version', InputArgument::REQUIRED, 'A versão da API (ex: v1, v2)');
+    }
+
+    protected function initialize(InputInterface $input, OutputInterface $output): void
+    {
+        $basePath = PathResolver::basePath();
+        $lang = LanguageHelper::getDefaultLanguage();
+        $langFile = "$basePath/core/Lang/{$lang}.php";
+        if (!file_exists($langFile)) {
+            $langFile = "$basePath/core/Lang/en.php";
+        }
+        $this->__ = include $langFile;
+        $this->translator = fn($key, $replacements = []) =>
+            str_replace(
+                array_map(fn($k) => ":{$k}", array_keys($replacements)),
+                array_values($replacements),
+                $this->__['make:module'][$key] ?? $key
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $entity = ucfirst($input->getArgument('entity'));
-        $plural = strtolower($entity) . 's';
+        $t = $this->translator;
 
-        $controllerDir = PathResolver::srcPath('Controllers');
-        $modelDir = PathResolver::srcPath('Models');
-        $validatorDir = PathResolver::srcPath('Validators');
-        $serviceDir = PathResolver::srcPath('Services');
-        $routeFile = PathResolver::routesPath('web.php');
+        $rawEntity = ucfirst(preg_replace('/[^a-zA-Z0-9]/', '', $input->getArgument('entity')));
+        $version = strtolower($input->getArgument('version'));
+        $namespacePrefix = 'V' . ltrim($version, 'v');
+        $routePath = strtolower(preg_replace('/(?<!^)[A-Z]/', '-$0', $rawEntity));
 
-        @mkdir($controllerDir, 0777, true);
-        @mkdir($modelDir, 0777, true);
-        @mkdir($validatorDir, 0777, true);
-        @mkdir($serviceDir, 0777, true);
+        $baseDir = PathResolver::basePath() . "/app/{$namespacePrefix}";
+        $dirs = [
+            'Controllers' => "$baseDir/Controllers",
+            'Models' => "$baseDir/Models",
+            'Validators' => "$baseDir/Validators",
+            'Services' => "$baseDir/Services",
+        ];
 
-        // Controller
-        $controllerFile = "$controllerDir/{$entity}Controller.php";
-        if (!file_exists($controllerFile)) {
-            $controllerTemplate = "<?php\n\nnamespace App\\Controllers;\n\nuse App\\Validators\\{$entity}Validator;\nuse App\\Services\\{$entity}Service;\n\nclass {$entity}Controller\n{\n    public function index() { echo json_encode(['list' => '{$plural}']); }\n    public function show(" . '$id' . ") { echo json_encode(['id' => \$id]); }\n    public function store() { \n        \$data = json_decode(file_get_contents('php://input'), true); \n        (new {$entity}Validator())->validate(\$data); \n        (new {$entity}Service())->store(\$data); \n        echo json_encode(['created' => true]); \n    }\n    public function update(" . '$id' . ") { \n        \$data = json_decode(file_get_contents('php://input'), true); \n        (new {$entity}Validator())->validate(\$data); \n        (new {$entity}Service())->update(\$id, \$data); \n        echo json_encode(['updated' => true]); \n    }\n    public function delete(" . '$id' . ") { \n        (new {$entity}Service())->delete(\$id); \n        echo json_encode(['deleted' => true]); \n    }\n}";
-            file_put_contents($controllerFile, $controllerTemplate);
-            $output->writeln("✅ Controller criado: {$controllerFile}");
-        } else {
-            $output->writeln("⚠ Controller já existe: {$controllerFile}");
+        foreach ($dirs as $dir) {
+            @mkdir($dir, 0777, true);
         }
 
-        // Model
-        $modelFile = "$modelDir/{$entity}.php";
-        if (!file_exists($modelFile)) {
-            $modelTemplate = "<?php\n\nnamespace App\\Models;\n\nclass {$entity}\n{\n    // Defina aqui os atributos e interações com o banco\n}";
-            file_put_contents($modelFile, $modelTemplate);
-            $output->writeln("✅ Model criado: {$modelFile}");
-        } else {
-            $output->writeln("⚠ Model já existe: {$modelFile}");
+        $templates = [
+            'Controllers' => [
+                'path' => "{$dirs['Controllers']}/{$rawEntity}Controller.php",
+                'content' => "<?php\n\nnamespace App\\{$namespacePrefix}\\Controllers;\n\nuse App\\{$namespacePrefix}\\Validators\\{$rawEntity}Validator;\nuse App\\{$namespacePrefix}\\Services\\{$rawEntity}Service;\n\nclass {$rawEntity}Controller\n{\n    public function index() { echo json_encode(['list' => '{$routePath}']); }\n    public function show(".'$id'.") { echo json_encode(['id' => \$id]); }\n    public function store() {\n        \$data = json_decode(file_get_contents('php://input'), true) ?? [];\n        (new {$rawEntity}Validator())->validate(\$data);\n        (new {$rawEntity}Service())->store(\$data);\n        echo json_encode(['created' => true]);\n    }\n    public function update(".'$id'.") {\n        \$data = json_decode(file_get_contents('php://input'), true) ?? [];\n        (new {$rawEntity}Validator())->validate(\$data);\n        (new {$rawEntity}Service())->update((int)\$id, \$data);\n        echo json_encode(['updated' => true]);\n    }\n    public function delete(".'$id'.") {\n        (new {$rawEntity}Service())->delete((int)\$id);\n        echo json_encode(['deleted' => true]);\n    }\n}\n"
+            ],
+            'Models' => [
+                'path' => "{$dirs['Models']}/{$rawEntity}.php",
+                'content' => "<?php\n\nnamespace App\\{$namespacePrefix}\\Models;\n\nclass {$rawEntity}\n{\n}\n"
+            ],
+            'Validators' => [
+                'path' => "{$dirs['Validators']}/{$rawEntity}Validator.php",
+                'content' => "<?php\n\nnamespace App\\{$namespacePrefix}\\Validators;\n\nuse Respect\\Validation\\Validator as v;\n\nclass {$rawEntity}Validator\n{\n    public function validate(array \$data): void\n    {\n        // TODO: regras de validação\n    }\n}\n"
+            ],
+            'Services' => [
+                'path' => "{$dirs['Services']}/{$rawEntity}Service.php",
+                'content' => "<?php\n\nnamespace App\\{$namespacePrefix}\\Services;\n\nclass {$rawEntity}Service\n{\n    public function store(array \$data): void {}\n    public function update(int \$id, array \$data): void {}\n    public function delete(int \$id): void {}\n}\n"
+            ],
+        ];
+
+        foreach ($templates as $type => $tpl) {
+            $label = $type . (file_exists($tpl['path']) ? '_exists' : '_created');
+            $output->writeln($t($label, ['file' => $tpl['path']]));
+            if (!file_exists($tpl['path'])) {
+                file_put_contents($tpl['path'], $tpl['content']);
+            }
         }
 
-        // Validator
-        $validatorFile = "$validatorDir/{$entity}Validator.php";
-        if (!file_exists($validatorFile)) {
-            $validatorTemplate = "<?php\n\nnamespace App\\Validators;\n\nuse Respect\\Validation\\Validator as v;\n\nclass {$entity}Validator\n{\n    public function validate(array \$data)\n    {\n        v::key('name', v::stringType()->length(1, 100))->assert(\$data);\n    }\n}";
-            file_put_contents($validatorFile, $validatorTemplate);
-            $output->writeln("✅ Validator criado: {$validatorFile}");
-        } else {
-            $output->writeln("⚠ Validator já existe: {$validatorFile}");
+        $routeFile = PathResolver::basePath() . "/routes/{$namespacePrefix}.php";
+
+        if (!file_exists($routeFile)) {
+            file_put_contents($routeFile, "<?php\n\nuse Core\\Routing\\Router;\n\nRouter::group('/{$namespacePrefix}', function () {\n    global \$router;\n\n});\n");
+            $output->writeln($t('route_file_created', ['file' => $routeFile]));
         }
 
-        // Service
-        $serviceFile = "$serviceDir/{$entity}Service.php";
-        if (!file_exists($serviceFile)) {
-            $serviceTemplate = "<?php\n\nnamespace App\\Services;\n\nclass {$entity}Service\n{\n    public function store(array \$data) { /* lógica de inserção */ }\n    public function update(int \$id, array \$data) { /* lógica de atualização */ }\n    public function delete(int \$id) { /* lógica de exclusão */ }\n}";
-            file_put_contents($serviceFile, $serviceTemplate);
-            $output->writeln("✅ Service criado: {$serviceFile}");
+        $content = file_get_contents($routeFile);
+        $routeBlock = "\n    // Rotas para {$rawEntity}\n" .
+            "    Router::map('GET', '/{$routePath}', 'App\\{$namespacePrefix}\\Controllers\\{$rawEntity}Controller@index');\n" .
+            "    Router::map('GET', '/{$routePath}/[i:id]', 'App\\{$namespacePrefix}\\Controllers\\{$rawEntity}Controller@show');\n" .
+            "    Router::map('POST', '/{$routePath}', 'App\\{$namespacePrefix}\\Controllers\\{$rawEntity}Controller@store');\n" .
+            "    Router::map('PUT', '/{$routePath}/[i:id]', 'App\\{$namespacePrefix}\\Controllers\\{$rawEntity}Controller@update');\n" .
+            "    Router::map('DELETE', '/{$routePath}/[i:id]', 'App\\{$namespacePrefix}\\Controllers\\{$rawEntity}Controller@delete');\n";
+
+    if (!str_contains($content, $t('route_to')." {$rawEntity}")) {
+            $groupStart = strpos($content, "Router::group(");
+            $insertPos = strrpos($content, "});");
+            if ($groupStart !== false && $insertPos !== false) {
+                $content = substr_replace($content, $routeBlock, $insertPos, 0);
+                file_put_contents($routeFile, $content);
+                $output->writeln($t('routes_added', ['file' => $routeFile]));
+            } else {
+                $output->writeln($t('route_not_found'));
+            }
         } else {
-            $output->writeln("⚠ Service já existe: {$serviceFile}");
-        }
-
-        // Rotas
-        $routeContent = file_get_contents($routeFile);
-        $useStatement = "use App\\Controllers\\{$entity}Controller;";
-
-        if (strpos($routeContent, $useStatement) === false) {
-            $routeContent = preg_replace("/(<\?php\\n)/", "$1{$useStatement}\n", $routeContent, 1);
-            file_put_contents($routeFile, $routeContent);
-            $output->writeln("✅ Use statement adicionado nas rotas.");
-        } else {
-            $output->writeln("⚠ Use statement já existe nas rotas.");
-        }
-
-        $routeContent = file_get_contents($routeFile);
-        if (strpos($routeContent, "/{$plural}") === false) {
-            $routeEntry = "\n\n// Rotas para {$entity}\n";
-            $routeEntry .= '$router->map' . "('GET', '/{$plural}', '{$entity}Controller#index');\n";
-            $routeEntry .= '$router->map' . "('GET', '/{$plural}/[i:id]', '{$entity}Controller#show');\n";
-            $routeEntry .= '$router->map' . "('POST', '/{$plural}', '{$entity}Controller#store');\n";
-            $routeEntry .= '$router->map' . "('PUT', '/{$plural}/[i:id]', '{$entity}Controller#update');\n";
-            $routeEntry .= '$router->map' . "('DELETE', '/{$plural}/[i:id]', '{$entity}Controller#delete');\n";
-
-            file_put_contents($routeFile, $routeEntry, FILE_APPEND);
-            $output->writeln("✅ Rotas adicionadas no arquivo web.php.");
-        } else {
-            $output->writeln("⚠ Rotas para {$entity} já existem.");
+            $output->writeln($t('routes_already_exists', ['entity' => $rawEntity]));
         }
 
         return Command::SUCCESS;
